@@ -1,17 +1,13 @@
 import streamlit as st
 import pandas as pd
-import os
 import plotly.express as px
 
-# Set page configuration
 st.set_page_config(page_title="AI Model Evaluation App", layout="wide")
 
-# Sidebar Configuration
 st.sidebar.title("AI Value Assessment")
-menu = ["Overview", "AI Model Input", "Evaluation", "Feedback"]
+menu = ["Overview", "AI Model Input", "Evaluation", "Results", "Feedback"]
 choice = st.sidebar.radio("Navigate", menu)
 
-# KPI List (Pre-embedded)
 kpi_data = [
     {"Business Objective": "New Sources of Value Creation", "KPI Category": "Digital Channels", "KPI Focus": "Revenues & Profit", "KPI Metrics": "Orders, Revenue, Customer Traffic, Transactions, Social Orders"},
     {"Business Objective": "New Sources of Value Creation", "KPI Category": "Digital Ecosystem", "KPI Focus": "Revenues & Profit", "KPI Metrics": "Partners & Networks, Referrals & Profit"},
@@ -22,7 +18,6 @@ kpi_data = [
     {"Business Objective": "Workforce Engagement", "KPI Category": "Talent Management", "KPI Focus": "Performance & Retention", "KPI Metrics": "Productivity & Efficiency, Talent Retention %, Turnover %"}
 ]
 
-# Likert Scale Questions (Agree/Disagree)
 likert_questions = [
     "The AI model effectively achieves the intended business objective.",
     "The KPIs identified are appropriate for measuring the AI model's performance.",
@@ -36,27 +31,25 @@ likert_questions = [
     "The AI-generated recommendations are actionable and relevant to the business goals."
 ]
 
-# Function to load KPI data
+additional_questions = [
+    "Is the AI model tangible or intangible?",
+    "Does the AI model result in cost reduction or cost increase?",
+    "Does the AI model result in revenue increase or revenue reduction?"
+]
+
 def load_kpi_data(uploaded_file=None):
-    """
-    Load KPI/KQI/KRI data into a pandas DataFrame.
-    If a file is uploaded, load from the file; otherwise, use pre-embedded data.
-    """
     if uploaded_file:
         try:
             df = pd.read_csv(uploaded_file)
             st.success("Uploaded KPI/KQI/KRI data loaded successfully.")
             return df
-        except Exception as e:
-            st.error(f"Error loading uploaded file: {e}")
+        except:
             return pd.DataFrame(kpi_data)
     else:
         return pd.DataFrame(kpi_data)
 
-# Overview Page
 if choice == "Overview":
     st.title("AI Model Evaluation App")
-    st.write("### Assess the value of your AI models, use cases, or applications by evaluating relevant KPIs, KQIs, and KRIs.")
     st.image("https://streamlit.io/images/brand/streamlit-logo-secondary-colormark-darktext.png", width=200)
     st.markdown("""
     **Features:**
@@ -67,20 +60,15 @@ if choice == "Overview":
     **How to Use:**
     1. Navigate to the **AI Model Input** section to describe your AI application.
     2. Proceed to the **Evaluation** section to answer evaluation questions.
-    3. View and analyze the results in the **Evaluation** section.
+    3. View and analyze the results in the **Results** section.
     4. Provide feedback in the **Feedback** section to help refine the system.
     """)
 
-# AI Model Input Page
 elif choice == "AI Model Input":
     st.header("Describe Your AI Model/Application")
-    st.write("Provide detailed information about your AI model to evaluate its value effectively.")
-    
     with st.form(key='ai_model_form'):
         ai_name = st.text_input("AI Model/Application Name", "e.g., Customer Churn Prediction")
-        ai_description = st.text_area("AI Model/Application Description", 
-                                       "Describe the purpose, target domain, risk factors, and operational context of your AI model...", 
-                                       height=200)
+        ai_description = st.text_area("AI Model/Application Description", "Describe the purpose, target domain, risk factors, and operational context of your AI model...", height=200)
         uploaded_file = st.file_uploader("Upload KPI/KQI/KRI Data (Optional)", type=["csv"])
         submit_button = st.form_submit_button(label='Save Description')
     
@@ -93,87 +81,86 @@ elif choice == "AI Model Input":
         else:
             st.error("Please provide both the AI Model/Application Name and Description.")
 
-# Evaluation Page
 elif choice == "Evaluation":
     st.header("Evaluate Your AI Model/Application")
-    
     if 'ai_name' not in st.session_state or 'ai_description' not in st.session_state:
         st.warning("Please provide details about your AI model/application in the 'AI Model Input' section first.")
     else:
         st.subheader(f"AI Model/Application: {st.session_state['ai_name']}")
         st.write(f"**Description:** {st.session_state['ai_description']}")
-        
-        st.markdown("### Evaluation Questionnaire")
         with st.form(key='evaluation_form'):
-            st.write("Please answer the following questions to evaluate your AI model/application.")
+            st.markdown("### Evaluation Questionnaire")
             responses = {}
             for question in likert_questions:
-                responses[question] = st.slider(question, 1, 5, 3)
+                responses[question] = st.radio(question, options=["Disagree", "Agree"], index=1)
+            for question in additional_questions:
+                if question == "Is the AI model tangible or intangible?":
+                    responses[question] = st.selectbox(question, options=["Tangible", "Intangible"])
+                elif question == "Does the AI model result in cost reduction or cost increase?":
+                    responses[question] = st.selectbox(question, options=["Cost Reduction", "Cost Increase"])
+                elif question == "Does the AI model result in revenue increase or revenue reduction?":
+                    responses[question] = st.selectbox(question, options=["Revenue Increase", "Revenue Reduction"])
             submit_evaluation = st.form_submit_button(label='Submit Evaluation')
         
         if submit_evaluation:
             st.session_state['evaluation'] = responses
             st.success("Evaluation submitted successfully!")
-            
-            # Display Evaluation Summary
-            st.markdown("### Evaluation Summary")
-            eval_df = pd.DataFrame.from_dict(responses, orient='index', columns=['Rating'])
-            eval_df.index.name = 'Question'
-            eval_df.reset_index(inplace=True)
-            st.table(eval_df)
-            
-            # Visualize Ratings
-            fig = px.bar(eval_df, x='Question', y='Rating', title="Evaluation Ratings", 
-                         labels={'Rating': 'Score (1-5)'}, 
-                         range_y=[0,5], 
-                         height=400)
-            st.plotly_chart(fig, use_container_width=True)
-            
-            # Suggest Relevant KPIs/KQIs/KRIs based on high ratings
-            st.markdown("### Suggested KPIs/KQIs/KRIs")
-            kpi_df = st.session_state['kpi_data']
-            st.dataframe(kpi_df)
-            
-            # Visualize KPIs
-            st.markdown("#### KPIs Visualization")
-            fig_kpi = px.bar(kpi_df, x='KPI Focus', y='KPI Metrics', title="KPIs Visualization")
-            st.plotly_chart(fig_kpi, use_container_width=True)
 
-# Feedback Page
-elif choice == "Feedback":
-    st.header("Provide Your Feedback")
-    st.write("Help us improve by rating your experience with the AI Model Evaluation App.")
-    
+elif choice == "Results":
+    st.header("Evaluation Results")
     if 'evaluation' not in st.session_state:
         st.warning("Please complete an evaluation in the 'Evaluation' section first.")
     else:
-        with st.form(key='feedback_form'):
-            st.subheader("Rate the App Experience")
-            feedback_scores = {}
-            feedback_questions = [
-                "The app interface is user-friendly.",
-                "The evaluation process was clear and comprehensive.",
-                "The KPIs/KQIs/KRIs suggestions are relevant.",
-                "The visualizations effectively represent the data.",
-                "Overall, I am satisfied with the app."
-            ]
-            for question in feedback_questions:
-                feedback_scores[question] = st.slider(question, 1, 5, 3)
-            
-            st.subheader("Additional Comments")
-            comments = st.text_area("Your Comments", height=100)
-            
-            submit_feedback = st.form_submit_button(label='Submit Feedback')
+        responses = st.session_state['evaluation']
+        kpi_df = st.session_state['kpi_data']
         
-        if submit_feedback:
-            st.success("Thank you for your feedback!")
-            st.write("**Your Ratings:**")
-            feedback_df = pd.DataFrame.from_dict(feedback_scores, orient='index', columns=['Rating'])
-            st.table(feedback_df)
-            st.write("**Your Comments:**")
-            st.write(comments)
+        st.subheader("Usable KPIs")
+        relevant_kpis = kpi_df.copy()
+        st.dataframe(relevant_kpis)
+        fig_kpi = px.bar(relevant_kpis, x='KPI Focus', y='KPI Metrics', title="KPIs Visualization")
+        st.plotly_chart(fig_kpi, use_container_width=True)
+        
+        st.subheader("Model Evaluation")
+        tangible = responses.get("Is the AI model tangible or intangible?", "Intangible")
+        cost_impact = responses.get("Does the AI model result in cost reduction or cost increase?", "Cost Reduction")
+        revenue_impact = responses.get("Does the AI model result in revenue increase or revenue reduction?", "Revenue Increase")
+        
+        eval_summary = pd.DataFrame({
+            "Aspect": ["Tangible/Intangible", "Cost Impact", "Revenue Impact"],
+            "Evaluation": [tangible, cost_impact, revenue_impact]
+        })
+        st.table(eval_summary)
+        
+        fig_eval = px.bar(eval_summary, x='Aspect', y='Evaluation', title="Model Evaluation", text='Evaluation')
+        st.plotly_chart(fig_eval, use_container_width=True)
 
-# Footer
+elif choice == "Feedback":
+    st.header("Provide Your Feedback")
+    with st.form(key='feedback_form'):
+        st.subheader("Rate the App Experience")
+        feedback_scores = {}
+        feedback_questions = [
+            "The app interface is user-friendly.",
+            "The evaluation process was clear and comprehensive.",
+            "The KPIs/KQIs/KRIs suggestions are relevant.",
+            "The visualizations effectively represent the data.",
+            "Overall, I am satisfied with the app."
+        ]
+        for question in feedback_questions:
+            feedback_scores[question] = st.slider(question, 1, 5, 3)
+        st.subheader("Additional Comments")
+        comments = st.text_area("Your Comments", height=100)
+        submit_feedback = st.form_submit_button(label='Submit Feedback')
+    
+    if submit_feedback:
+        st.success("Thank you for your feedback!")
+        feedback_df = pd.DataFrame.from_dict(feedback_scores, orient='index', columns=['Rating'])
+        feedback_df.reset_index(inplace=True)
+        feedback_df.rename(columns={'index': 'Question'}, inplace=True)
+        st.table(feedback_df)
+        st.write("**Your Comments:**")
+        st.write(comments)
+
 st.markdown("""
 ---
 **Built with Streamlit and Python**  
