@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 
 st.set_page_config(page_title="App di Valutazione Modello AI", layout="wide")
 
@@ -10,13 +9,16 @@ choice = st.sidebar.radio("Naviga", menu)
 
 # Dati KPI, KQI e KRI (in italiano)
 kpi_data = [
-    {"Business Objective": "Nuove Fonti di Creazione di Valore", "Tipo": "KPI", "Categoria KPI": "Canali Digitali", "Focus KPI": "Ricavi & Profitti", "Metriche KPI": "Ordini, Ricavi, Traffico Clienti, Transazioni, Ordini Sociali"},
-    {"Business Objective": "Nuove Fonti di Creazione di Valore", "Tipo": "KPI", "Categoria KPI": "Ecosistema Digitale", "Focus KPI": "Ricavi & Profitti", "Metriche KPI": "Partner & Reti, Referral & Profitti"},
-    {"Business Objective": "Nuove Fonti di Creazione di Valore", "Tipo": "KPI", "Categoria KPI": "Integrazione Fisica", "Focus KPI": "Ricavi & Profitti", "Metriche KPI": "Prodotti Digitali, Prezzi, Promozioni, Nuovi Modelli di Business"},
-    {"Business Objective": "Coinvolgimento del Cliente", "Tipo": "KQI", "Categoria KQI": "Tempo Risparmiato dal Cliente", "Focus KQI": "Tempo Risparmiato", "Metriche KQI": "Ore Risparmiate, Tempo per Completare, Per Richiesta"},
-    {"Business Objective": "Efficienza Operativa", "Tipo": "KPI", "Categoria KPI": "Velocità di Risposta, Consegna", "Focus KPI": "Tempo & Conformità", "Metriche KPI": "Riduzione del Tempo di Consegna, % Conformità, Tempo di Attesa, Lavoro Completato"},
-    {"Business Objective": "Coinvolgimento della Forza Lavoro", "Tipo": "KRI", "Categoria KRI": "Diversità, Equità & Inclusione", "Focus KRI": "Performance & Inclusione", "Metriche KRI": "Indice DEI %, Ore di Formazione, Miglioramento %"},
-    {"Business Objective": "Coinvolgimento della Forza Lavoro", "Tipo": "KQI", "Categoria KQI": "Gestione del Talento", "Focus KQI": "Performance & Ritenzione", "Metriche KQI": "Produttività & Efficienza, % Ritenzione Talenti, % Turnover"}
+    {"Business Objective": "Nuove Fonti di Creazione di Valore", "Tipo": "KPI", "Categoria": "Canali Digitali", "Focus": "Ricavi & Profitti", "Metriche": "Ordini, Ricavi, Traffico Clienti, Transazioni, Ordini Sociali"},
+    {"Business Objective": "Nuove Fonti di Creazione di Valore", "Tipo": "KPI", "Categoria": "Ecosistema Digitale", "Focus": "Ricavi & Profitti", "Metriche": "Partner & Reti, Referral & Profitti"},
+    {"Business Objective": "Nuove Fonti di Creazione di Valore", "Tipo": "KPI", "Categoria": "Integrazione Fisica", "Focus": "Ricavi & Profitti", "Metriche": "Prodotti Digitali, Prezzi, Promozioni, Nuovi Modelli di Business"},
+    {"Business Objective": "Coinvolgimento del Cliente", "Tipo": "KQI", "Categoria": "Tempo Risparmiato dal Cliente", "Focus": "Tempo Risparmiato", "Metriche": "Ore Risparmiate, Tempo per Completare, Per Richiesta"},
+    {"Business Objective": "Efficienza Operativa", "Tipo": "KPI", "Categoria": "Velocità di Risposta, Consegna", "Focus": "Tempo & Conformità", "Metriche": "Riduzione del Tempo di Consegna, % Conformità, Tempo di Attesa, Lavoro Completato"},
+    {"Business Objective": "Coinvolgimento della Forza Lavoro", "Tipo": "KRI", "Categoria": "Diversità, Equità & Inclusione", "Focus": "Performance & Inclusione", "Metriche": "Indice DEI %, Ore di Formazione, Miglioramento %"},
+    {"Business Objective": "Coinvolgimento della Forza Lavoro", "Tipo": "KQI", "Categoria": "Gestione del Talento", "Focus": "Performance & Ritenzione", "Metriche": "Produttività & Efficienza, % Ritenzione Talenti, % Turnover"},
+    {"Business Objective": "Innovazione", "Tipo": "KQI", "Categoria": "Sviluppo Prodotto", "Focus": "Innovazione", "Metriche": "Numero di Nuovi Prodotti, Tempo di Sviluppo, Percentuale di Innovazione"},
+    {"Business Objective": "Soddisfazione del Cliente", "Tipo": "KQI", "Categoria": "Feedback Cliente", "Focus": "Soddisfazione", "Metriche": "Net Promoter Score, Recensioni Positive, Tasso di Ritorno"},
+    {"Business Objective": "Sostenibilità", "Tipo": "KRI", "Categoria": "Impatto Ambientale", "Focus": "Sostenibilità", "Metriche": "Emissioni di CO2, Consumo Energetico, Uso di Risorse Rinnovabili"}
 ]
 
 # Domande Likert (in italiano)
@@ -30,14 +32,19 @@ likert_questions = [
     "Il coinvolgimento del cliente è aumentato grazie all'implementazione del modello AI.",
     "Il modello AI ha un impatto positivo sulla produttività della forza lavoro e sulla gestione dei talenti.",
     "Il modello AI supporta efficacemente gli obiettivi di sostenibilità.",
-    "Le raccomandazioni generate dall'AI sono azionabili e rilevanti per gli obiettivi aziendali."
+    "Le raccomandazioni generate dall'AI sono azionabili e rilevanti per gli obiettivi aziendali.",
+    "Il modello AI facilita l'innovazione all'interno dell'azienda.",
+    "Il modello AI contribuisce a migliorare la soddisfazione del cliente.",
+    "Il modello AI è facilmente integrabile con i sistemi esistenti.",
+    "Il modello AI riduce significativamente i tempi di processo.",
+    "Il modello AI aumenta la qualità dei servizi/prodotti offerti."
 ]
 
-# Domande aggiuntive (in italiano)
+# Domande aggiuntive convertite in scala Likert (in italiano)
 additional_questions = [
-    "Il modello AI è tangibile o intangibile?",
-    "Il modello AI comporta una riduzione dei costi o un aumento dei costi?",
-    "Il modello AI comporta un aumento dei ricavi o una riduzione dei ricavi?"
+    "Il modello AI è facilmente comprensibile e misurabile.",
+    "Il modello AI contribuisce significativamente alla riduzione dei costi.",
+    "Il modello AI contribuisce significativamente all'aumento dei ricavi."
 ]
 
 # Funzione per caricare i dati KPI/KQI/KRI
@@ -60,7 +67,7 @@ if choice == "Panoramica":
     st.markdown("""
     **Caratteristiche:**
     - **Valutazione Strutturata**: Rispondi a domande comprehensive per valutare il tuo modello AI.
-    - **Dashboard Interattiva**: Visualizza i tuoi KPI con grafici e tabelle dinamici.
+    - **Dashboard Interattiva**: Visualizza i tuoi KPI con tabelle ben formattate.
     - **Sistema di Feedback**: Fornisci feedback per migliorare il processo di valutazione.
     
     **Come Usare:**
@@ -108,20 +115,25 @@ elif choice == "Valutazione":
             responses = {}
             for i, question in enumerate(likert_questions):
                 with col1 if i % 2 == 0 else col2:
-                    responses[question] = st.select_slider(
+                    responses[question] = st.slider(
                         question,
-                        options=range(1, 8),
+                        min_value=1,
+                        max_value=7,
                         value=4,
-                        format_func=lambda x: f"{x}"
+                        step=1,
+                        format="{}"
                     )
             st.markdown("---")
             for question in additional_questions:
-                if question == "Il modello AI è tangibile o intangibile?":
-                    responses[question] = st.selectbox(question, options=["Tangibile", "Intangibile"])
-                elif question == "Il modello AI comporta una riduzione dei costi o un aumento dei costi?":
-                    responses[question] = st.selectbox(question, options=["Riduzione dei Costi", "Aumento dei Costi"])
-                elif question == "Il modello AI comporta un aumento dei ricavi o una riduzione dei ricavi?":
-                    responses[question] = st.selectbox(question, options=["Aumento dei Ricavi", "Riduzione dei Ricavi"])
+                with st.container():
+                    responses[question] = st.slider(
+                        question,
+                        min_value=1,
+                        max_value=7,
+                        value=4,
+                        step=1,
+                        format="{}"
+                    )
             submit_evaluation = st.form_submit_button(label='Invia Valutazione')
         
         if submit_evaluation:
@@ -147,8 +159,13 @@ elif choice == "Risultati":
             "L'applicazione AI migliora l'efficienza operativa misurata dai KPI rilevanti.": "Efficienza Operativa",
             "Il coinvolgimento del cliente è aumentato grazie all'implementazione del modello AI.": "Coinvolgimento del Cliente",
             "Il modello AI ha un impatto positivo sulla produttività della forza lavoro e sulla gestione dei talenti.": "Coinvolgimento della Forza Lavoro",
-            "Il modello AI supporta efficacemente gli obiettivi di sostenibilità.": "Coinvolgimento del Cliente",
-            "Le raccomandazioni generate dall'AI sono azionabili e rilevanti per gli obiettivi aziendali.": "Nuove Fonti di Creazione di Valore"
+            "Il modello AI supporta efficacemente gli obiettivi di sostenibilità.": "Sostenibilità",
+            "Le raccomandazioni generate dall'AI sono azionabili e rilevanti per gli obiettivi aziendali.": "Nuove Fonti di Creazione di Valore",
+            "Il modello AI facilita l'innovazione all'interno dell'azienda.": "Innovazione",
+            "Il modello AI contribuisce a migliorare la soddisfazione del cliente.": "Soddisfazione del Cliente",
+            "Il modello AI è facilmente integrabile con i sistemi esistenti.": "Efficienza Operativa",
+            "Il modello AI riduce significativamente i tempi di processo.": "Efficienza Operativa",
+            "Il modello AI aumenta la qualità dei servizi/prodotti offerti.": "Soddisfazione del Cliente"
         }
         
         # Calcolo del punteggio per ogni Business Objective
@@ -158,7 +175,7 @@ elif choice == "Risultati":
                 obj = question_mapping[question]
                 business_scores[obj] = business_scores.get(obj, 0) + score
         
-        # Determinare i Business Objectives con punteggio sopra la media
+        # Determinare i Business Objectives con punteggi sopra la media
         avg_score = sum(business_scores.values()) / len(business_scores) if business_scores else 0
         relevant_objectives = [obj for obj, score in business_scores.items() if score >= avg_score]
         
@@ -170,56 +187,51 @@ elif choice == "Risultati":
         # Risultati KPI
         st.subheader("KPI Utilizzabili")
         if not relevant_kpis.empty:
-            st.dataframe(relevant_kpis[['Business Objective', 'Categoria KPI', 'Focus KPI', 'Metriche KPI']])
-            fig_kpi = px.bar(relevant_kpis, x='Focus KPI', y='Metriche KPI', color='Categoria KPI',
-                             title="Visualizzazione dei KPI", labels={"Focus KPI": "Focus", "Metriche KPI": "Metriche"})
-            st.plotly_chart(fig_kpi, use_container_width=True)
+            for index, row in relevant_kpis.iterrows():
+                st.markdown(f"**Categoria KPI:** {row['Categoria']}")
+                st.markdown(f"- **Focus:** {row['Focus']}")
+                st.markdown(f"- **Metriche:** {row['Metriche']}")
+                st.markdown("---")
         else:
             st.write("Nessun KPI rilevante trovato basato sulla valutazione.")
         
         # Risultati KQI
         st.subheader("KQI Utilizzabili")
         if not relevant_kqis.empty:
-            st.dataframe(relevant_kqis[['Business Objective', 'Categoria KQI', 'Focus KQI', 'Metriche KQI']])
-            fig_kqi = px.bar(relevant_kqis, x='Focus KQI', y='Metriche KQI', color='Categoria KQI',
-                             title="Visualizzazione dei KQI", labels={"Focus KQI": "Focus", "Metriche KQI": "Metriche"})
-            st.plotly_chart(fig_kqi, use_container_width=True)
+            for index, row in relevant_kqis.iterrows():
+                st.markdown(f"**Categoria KQI:** {row['Categoria']}")
+                st.markdown(f"- **Focus:** {row['Focus']}")
+                st.markdown(f"- **Metriche:** {row['Metriche']}")
+                st.markdown("---")
         else:
             st.write("Nessun KQI rilevante trovato basato sulla valutazione.")
         
         # Risultati KRI
         st.subheader("KRI Utilizzabili")
         if not relevant_kris.empty:
-            st.dataframe(relevant_kris[['Business Objective', 'Categoria KRI', 'Focus KRI', 'Metriche KRI']])
-            fig_kri = px.bar(relevant_kris, x='Focus KRI', y='Metriche KRI', color='Categoria KRI',
-                             title="Visualizzazione dei KRI", labels={"Focus KRI": "Focus", "Metriche KRI": "Metriche"})
-            st.plotly_chart(fig_kri, use_container_width=True)
+            for index, row in relevant_kris.iterrows():
+                st.markdown(f"**Categoria KRI:** {row['Categoria']}")
+                st.markdown(f"- **Focus:** {row['Focus']}")
+                st.markdown(f"- **Metriche:** {row['Metriche']}")
+                st.markdown("---")
         else:
             st.write("Nessun KRI rilevante trovato basato sulla valutazione.")
         
         # Valutazione del Modello
         st.subheader("Valutazione del Modello")
-        tangible = responses.get("Il modello AI è tangibile o intangibile?", "Intangibile")
-        cost_impact = responses.get("Il modello AI comporta una riduzione dei costi o un aumento dei costi?", "Riduzione dei Costi")
-        revenue_impact = responses.get("Il modello AI comporta un aumento dei ricavi o una riduzione dei ricavi?", "Aumento dei Ricavi")
+        tangible = responses.get("Il modello AI è facilmente comprensibile e misurabile?", 4)
+        cost_impact = responses.get("Il modello AI contribuisce significativamente alla riduzione dei costi.", 4)
+        revenue_impact = responses.get("Il modello AI contribuisce significativamente all'aumento dei ricavi.", 4)
         
         eval_summary = pd.DataFrame({
-            "Aspetto": ["Tangibile/Intangibile", "Impatto sui Costi", "Impatto sui Ricavi"],
+            "Aspetto": ["Comprensibilità e Misurabilità", "Contributo alla Riduzione dei Costi", "Contributo all'Aumento dei Ricavi"],
             "Valutazione": [tangible, cost_impact, revenue_impact]
         })
         st.table(eval_summary)
         
-        # Visualizzazione della Valutazione del Modello
-        fig_eval = px.bar(eval_summary, 
-                          x='Aspetto', 
-                          y='Valutazione', 
-                          title="Valutazione del Modello",
-                          text='Valutazione',
-                          color='Aspetto',
-                          color_discrete_sequence=px.colors.qualitative.Pastel)
-        fig_eval.update_traces(texttemplate='%{text}', textposition='outside')
-        fig_eval.update_layout(uniformtext_minsize=8, uniformtext_mode='hide', yaxis_title="")
-        st.plotly_chart(fig_eval, use_container_width=True)
+        st.markdown("### Valutazione Dettagliata")
+        for index, row in eval_summary.iterrows():
+            st.markdown(f"- **{row['Aspetto']}:** {row['Valutazione']}")
 
 # Feedback
 elif choice == "Feedback":
@@ -243,11 +255,13 @@ elif choice == "Feedback":
         col1, col2 = st.columns(2)
         for i, question in enumerate(feedback_questions):
             with col1 if i % 2 == 0 else col2:
-                feedback_scores[question] = st.select_slider(
+                feedback_scores[question] = st.slider(
                     question,
-                    options=range(1, 8),
+                    min_value=1,
+                    max_value=7,
                     value=4,
-                    format_func=lambda x: f"{x}"
+                    step=1,
+                    format="{}"
                 )
         st.markdown("---")
         st.subheader("Commenti Aggiuntivi")
