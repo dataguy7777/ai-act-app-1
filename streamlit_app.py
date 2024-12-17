@@ -181,7 +181,17 @@ def evaluate_ai_model():
         st.session_state['evaluation'] = responses
         st.success("Valutazione inviata con successo!")
 
-# Results Section
+# Function to calculate overall scores
+def calculate_overall_scores(responses):
+    ease_questions = [
+        "Il modello AI è facilmente integrabile con i sistemi esistenti.",
+        "Il modello AI è facilmente comprensibile e misurabile."
+    ]
+    value_score = sum(responses.values()) / len(responses) * 14.3  # Scale to 100
+    ease_score = sum([responses.get(q, 4) for q in ease_questions]) / len(ease_questions) * 14.3
+    return ease_score, value_score
+
+# Results Section with LaTeX Formatting and Examples
 def show_results():
     st.header("Risultati della Valutazione")
     if 'evaluation' not in st.session_state:
@@ -217,31 +227,131 @@ def show_results():
     # Tabs for each Business Objective
     result_tabs = st.tabs(relevant_objectives)
     
-    # Function to display indicators
-    def display_indicators(indicators, tipo):
+    # Function to display indicators with LaTeX and Examples
+    def display_indicators_with_examples(indicators, tipo):
         if not indicators.empty:
             for index, row in indicators.iterrows():
                 categoria = row.get('Categoria', 'N/A')
                 focus = row.get('Focus', 'N/A')
-                metriche = row.get('Metriche', 'N/A')
+                metriche = row.get('Metriche', 'N/A').split(', ')
+                
                 st.markdown(f"**Categoria {tipo}:** {categoria}")
                 st.markdown(f"- **Focus:** {focus}")
-                st.markdown(f"- **Metriche:** {metriche}")
-                st.markdown("---")
+                
+                for metrica in metriche:
+                    # Define LaTeX representation and example based on the metric
+                    if metrica.lower() == "ordini":
+                        formula = r"Numero\ di\ Ordini = \text{Totale Ordini Ricevuti in un Periodo}"
+                        example = "Ad esempio, se in un mese ricevi 150 ordini, il Numero di Ordini è 150."
+                    elif metrica.lower() == "ricavi":
+                        formula = r"Ricavi = \text{Prezzo Medio per Ordine} \times \text{Numero di Ordini}"
+                        example = "Se il prezzo medio per ordine è €50 e ricevi 150 ordini, i Ricavi sono €7,500."
+                    elif metrica.lower() == "traffico clienti":
+                        formula = r"Traffico\ Clienti = \text{Visite Totali al Sito Web in un Periodo}"
+                        example = "Se il tuo sito web riceve 10,000 visite in un mese, il Traffico Clienti è 10,000."
+                    elif metrica.lower() == "transazioni":
+                        formula = r"Numero\ di\ Transazioni = \text{Totale Transazioni Processate}"
+                        example = "Se vengono processate 200 transazioni in una settimana, il Numero di Transazioni è 200."
+                    elif metrica.lower() == "ordini sociali":
+                        formula = r"Ordini\ Sociali = \text{Numero di Ordini Provenienti da Canali Social}"
+                        example = "Se 50 ordini provengono da piattaforme social in un mese, gli Ordini Sociali sono 50."
+                    elif metrica.lower() == "partner & reti":
+                        formula = r"Partner\ &\ Reti = \text{Numero di Partner Attivi e Reti Collaborate}"
+                        example = "Se hai 5 partner attivi e collabori con 3 reti, Partner & Reti = 8."
+                    elif metrica.lower() == "referral & profitti":
+                        formula = r"Referral\ &\ Profitti = \text{Profitti Generati da Referral}"
+                        example = "Se i referral generano €2,000 di profitti in un trimestre, Referral & Profitti = €2,000."
+                    elif metrica.lower() == "prodotti digitali":
+                        formula = r"Prodotti\ Digitali = \text{Numero di Prodotti Digitali Offerti}"
+                        example = "Se offri 10 prodotti digitali, Prodotti Digitali = 10."
+                    elif metrica.lower() == "prezzi":
+                        formula = r"Prezzi\ Medi = \text{Prezzo Medio dei Prodotti Venduti}"
+                        example = "Se il prezzo medio è €50, allora Prezzi Medi = €50."
+                    elif metrica.lower() == "promozioni":
+                        formula = r"Promozioni = \text{Numero di Promozioni Attuate}"
+                        example = "Se lanci 3 promozioni in un mese, Promozioni = 3."
+                    elif metrica.lower() == "nuovi modelli di business":
+                        formula = r"Nuovi\ Modelli\ di\ Business = \text{Numero di Nuovi Modelli Introdotti}"
+                        example = "Se introduci 2 nuovi modelli di business, Nuovi Modelli di Business = 2."
+                    elif metrica.lower() == "riduzione del tempo di consegna":
+                        formula = r"Riduzione\ del\ Tempo\ di\ Consegna = \text{Tempo di Consegna Iniziale} - \text{Tempo di Consegna Attuale}"
+                        example = "Se riduci il tempo di consegna da 5 giorni a 3 giorni, la Riduzione è di 2 giorni."
+                    elif metrica.lower() == "% conformità":
+                        formula = r"% Conformità = \left( \frac{\text{Processi Conformi}}{\text{Totali Processi}} \right) \times 100"
+                        example = "Se 90 su 100 processi sono conformi, % Conformità = 90%."
+                    elif metrica.lower() == "tempo di attesa":
+                        formula = r"Tempo\ di\ Attesa = \text{Tempo Medio di Attesa per il Cliente}"
+                        example = "Se il tempo medio di attesa è di 2 minuti, Tempo di Attesa = 2 minuti."
+                    elif metrica.lower() == "lavoro completato":
+                        formula = r"Lavoro\ Completato = \text{Numero di Task Completati}"
+                        example = "Se completi 50 task in una settimana, Lavoro Completato = 50."
+                    elif metrica.lower() == "indice deiei %":
+                        formula = r"Indice\ DEI\% = \left( \frac{\text{Dipendenti Diverse}}{\text{Totale Dipendenti}} \right) \times 100"
+                        example = "Se 30 su 100 dipendenti sono diverse, Indice DEI% = 30%."
+                    elif metrica.lower() == "ore di formazione":
+                        formula = r"Ore\ di\ Formazione = \text{Totale Ore di Formazione Fornite}"
+                        example = "Se fornisci 200 ore di formazione, Ore di Formazione = 200."
+                    elif metrica.lower() == "miglioramento %":
+                        formula = r"Miglioramento\% = \left( \frac{\text{Miglioramento Effettivo}}{\text{Miglioramento Atteso}} \right) \times 100"
+                        example = "Se l'effettivo miglioramento è del 20% rispetto al 15% atteso, Miglioramento% = 133.33%."
+                    elif metrica.lower() == "produttività & efficienza":
+                        formula = r"Produttività\ &\ Efficienza = \text{Output per Ora Lavorata}"
+                        example = "Se produci 10 unità all'ora, Produttività & Efficienza = 10 unità/ora."
+                    elif metrica.lower() == "% ritenzione talenti":
+                        formula = r"% Ritenzione Talenti = \left( \frac{\text{Talent Retained}}{\text{Total Talent}} \right) \times 100"
+                        example = "Se mantieni 80 su 100 talenti, % Ritenzione Talenti = 80%."
+                    elif metrica.lower() == "% turnover":
+                        formula = r"% Turnover = \left( \frac{\text{Dipendenti che Lasciato}}{\text{Totale Dipendenti}} \right) \times 100"
+                        example = "Se 10 dipendenti lasciano su 100, % Turnover = 10%."
+                    elif metrica.lower() == "numero di nuovi prodotti":
+                        formula = r"Numero\ di\ Nuovi\ Prodotti = \text{Totale Nuovi Prodotti Introdotti}"
+                        example = "Se introduci 5 nuovi prodotti, Numero di Nuovi Prodotti = 5."
+                    elif metrica.lower() == "tempo di sviluppo":
+                        formula = r"Tempo\ di\ Sviluppo = \text{Tempo Medio per Sviluppare un Prodotto}"
+                        example = "Se impieghi 3 mesi per sviluppare un prodotto, Tempo di Sviluppo = 3 mesi."
+                    elif metrica.lower() == "percentuale di innovazione":
+                        formula = r"Percentuale\ di\ Innovazione = \left( \frac{\text{Prodotti Innovativi}}{\text{Totale Prodotti}} \right) \times 100"
+                        example = "Se 2 su 10 prodotti sono innovativi, Percentuale di Innovazione = 20%."
+                    elif metrica.lower() == "net promoter score":
+                        formula = r"Net\ Promoter\ Score = \text{% Promotori} - \text{% Detrattori}"
+                        example = "Se hai 70% promotori e 10% detrattori, NPS = 60."
+                    elif metrica.lower() == "recensioni positive":
+                        formula = r"Recensioni\ Positive = \text{Numero di Recensioni Positive}"
+                        example = "Se ricevi 150 recensioni positive, Recensioni Positive = 150."
+                    elif metrica.lower() == "tasso di ritorno":
+                        formula = r"Tasso\ di\ Ritorno = \left( \frac{\text{Clienti di Ritorno}}{\text{Totale Clienti}} \right) \times 100"
+                        example = "Se 40 su 100 clienti tornano, Tasso di Ritorno = 40%."
+                    elif metrica.lower() == "emissioni di co2":
+                        formula = r"Emissioni\ di\ CO2 = \text{Totale Emissioni di CO2 (kg)}"
+                        example = "Se emetti 500 kg di CO2, Emissioni di CO2 = 500 kg."
+                    elif metrica.lower() == "consumo energetico":
+                        formula = r"Consumo\ Energetico = \text{Totale Energia Consumata (kWh)}"
+                        example = "Se consumi 1000 kWh, Consumo Energetico = 1000 kWh."
+                    elif metrica.lower() == "uso di risorse rinnovabili":
+                        formula = r"Uso\ di\ Risorse\ Rinnovabili = \left( \frac{\text{Energia Rinnovabile Utilizzata}}{\text{Totale Energia Utilizzata}} \right) \times 100"
+                        example = "Se utilizzi 300 kWh di energia rinnovabile su 1000 kWh totali, Uso di Risorse Rinnovabili = 30%."
+                    else:
+                        formula = r"\text{Definizione non disponibile}"
+                        example = "Nessun esempio disponibile."
+                    
+                    # Display KPI with LaTeX and Example
+                    st.markdown(f"**{metrica}:**")
+                    st.latex(formula)
+                    st.markdown(f"*Esempio:* {example}\n")
         else:
             st.write(f"Nessun {tipo} rilevante trovato per questa categoria.")
-    
+
     for tab, objective in zip(result_tabs, relevant_objectives):
         with tab:
             st.subheader(f"KPI/KQI/KRI per {objective}")
-            st.markdown("**KPI Utilizzabili**")
-            display_indicators(relevant_kpis[relevant_kpis['Business Objective'] == objective], "KPI")
-            
-            st.markdown("**KQI Utilizzabili**")
-            display_indicators(relevant_kqis[relevant_kqis['Business Objective'] == objective], "KQI")
-            
-            st.markdown("**KRI Utilizzabili**")
-            display_indicators(relevant_kris[relevant_kris['Business Objective'] == objective], "KRI")
+            st.markdown("**KPI/KQI/KRI Utilizzabili**")
+            # Determine Tipo (KPI, KQI, KRI) and display accordingly
+            indicators = kpi_df[kpi_df['Business Objective'] == objective]
+            tipi = indicators['Tipo'].unique()
+            for tipo in tipi:
+                st.markdown(f"### {tipo}")
+                subset = indicators[indicators['Tipo'] == tipo]
+                display_indicators_with_examples(subset, tipo)
     
     # Additional Visualizations
     st.markdown("---")
@@ -283,16 +393,6 @@ def show_results():
     st.markdown("### Valutazione Dettagliata")
     for index, row in eval_summary.iterrows():
         st.markdown(f"- **{row['Aspetto']}:** {row['Valutazione']}")
-
-# Function to calculate overall scores
-def calculate_overall_scores(responses):
-    ease_questions = [
-        "Il modello AI è facilmente integrabile con i sistemi esistenti.",
-        "Il modello AI è facilmente comprensibile e misurabile."
-    ]
-    value_score = sum(responses.values()) / len(responses) * 14.3  # Scale to 100
-    ease_score = sum([responses.get(q, 4) for q in ease_questions]) / len(ease_questions) * 14.3
-    return ease_score, value_score
 
 # Feedback Section
 def feedback_section():
