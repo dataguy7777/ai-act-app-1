@@ -90,9 +90,11 @@ elif choice == "Evaluation":
         st.write(f"**Description:** {st.session_state['ai_description']}")
         with st.form(key='evaluation_form'):
             st.markdown("### Evaluation Questionnaire")
+            col1, col2 = st.columns(2)
             responses = {}
-            for question in likert_questions:
-                responses[question] = st.radio(question, options=["Disagree", "Agree"], index=1)
+            for i, question in enumerate(likert_questions):
+                with col1 if i % 2 == 0 else col2:
+                    responses[question] = st.slider(question, 1, 7, 4, format="{}")
             for question in additional_questions:
                 if question == "Is the AI model tangible or intangible?":
                     responses[question] = st.selectbox(question, options=["Tangible", "Intangible"])
@@ -147,7 +149,7 @@ elif choice == "Feedback":
             "Overall, I am satisfied with the app."
         ]
         for question in feedback_questions:
-            feedback_scores[question] = st.slider(question, 1, 5, 3)
+            feedback_scores[question] = st.slider(question, 1, 7, 4, format="{}")
         st.subheader("Additional Comments")
         comments = st.text_area("Your Comments", height=100)
         submit_feedback = st.form_submit_button(label='Submit Feedback')
