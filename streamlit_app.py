@@ -1,72 +1,119 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 
+# Set page configuration
 st.set_page_config(page_title="App di Valutazione Modello AI", layout="wide")
 
-st.sidebar.title("Valutazione Valore AI")
-menu = ["Panoramica", "Input Modello AI", "Valutazione", "Risultati", "Feedback"]
-choice = st.sidebar.radio("Naviga", menu)
+# Sidebar Navigation
+def sidebar_navigation():
+    st.sidebar.title("Valutazione Valore AI")
+    menu = ["Panoramica", "Input Modello AI", "Valutazione", "Risultati", "Feedback"]
+    choice = st.sidebar.radio("Naviga", menu)
+    return choice
 
-# Dati KPI, KQI e KRI (in italiano)
-kpi_data = [
-    {"Business Objective": "Nuove Fonti di Creazione di Valore", "Tipo": "KPI", "Categoria": "Canali Digitali", "Focus": "Ricavi & Profitti", "Metriche": "Ordini, Ricavi, Traffico Clienti, Transazioni, Ordini Sociali"},
-    {"Business Objective": "Nuove Fonti di Creazione di Valore", "Tipo": "KPI", "Categoria": "Ecosistema Digitale", "Focus": "Ricavi & Profitti", "Metriche": "Partner & Reti, Referral & Profitti"},
-    {"Business Objective": "Nuove Fonti di Creazione di Valore", "Tipo": "KPI", "Categoria": "Integrazione Fisica", "Focus": "Ricavi & Profitti", "Metriche": "Prodotti Digitali, Prezzi, Promozioni, Nuovi Modelli di Business"},
-    {"Business Objective": "Coinvolgimento del Cliente", "Tipo": "KQI", "Categoria": "Tempo Risparmiato dal Cliente", "Focus": "Tempo Risparmiato", "Metriche": "Ore Risparmiate, Tempo per Completare, Per Richiesta"},
-    {"Business Objective": "Efficienza Operativa", "Tipo": "KPI", "Categoria": "Velocità di Risposta, Consegna", "Focus": "Tempo & Conformità", "Metriche": "Riduzione del Tempo di Consegna, % Conformità, Tempo di Attesa, Lavoro Completato"},
-    {"Business Objective": "Coinvolgimento della Forza Lavoro", "Tipo": "KRI", "Categoria": "Diversità, Equità & Inclusione", "Focus": "Performance & Inclusione", "Metriche": "Indice DEI %, Ore di Formazione, Miglioramento %"},
-    {"Business Objective": "Coinvolgimento della Forza Lavoro", "Tipo": "KQI", "Categoria": "Gestione del Talento", "Focus": "Performance & Ritenzione", "Metriche": "Produttività & Efficienza, % Ritenzione Talenti, % Turnover"},
-    {"Business Objective": "Innovazione", "Tipo": "KQI", "Categoria": "Sviluppo Prodotto", "Focus": "Innovazione", "Metriche": "Numero di Nuovi Prodotti, Tempo di Sviluppo, Percentuale di Innovazione"},
-    {"Business Objective": "Soddisfazione del Cliente", "Tipo": "KQI", "Categoria": "Feedback Cliente", "Focus": "Soddisfazione", "Metriche": "Net Promoter Score, Recensioni Positive, Tasso di Ritorno"},
-    {"Business Objective": "Sostenibilità", "Tipo": "KRI", "Categoria": "Impatto Ambientale", "Focus": "Sostenibilità", "Metriche": "Emissioni di CO2, Consumo Energetico, Uso di Risorse Rinnovabili"}
-]
-
-# Domande Likert (in italiano) associate ai Business Objectives
-likert_questions = {
-    "Nuove Fonti di Creazione di Valore": [
-        "Il modello AI facilita l'innovazione all'interno dell'azienda.",
-        "Il modello AI contribuisce a migliorare la soddisfazione del cliente.",
-        "Il modello AI è facilmente integrabile con i sistemi esistenti."
-    ],
-    "Coinvolgimento del Cliente": [
-        "Il coinvolgimento del cliente è aumentato grazie all'implementazione del modello AI.",
-        "Il modello AI supporta efficacemente gli obiettivi di sostenibilità.",
-        "Le raccomandazioni generate dall'AI sono azionabili e rilevanti per gli obiettivi aziendali."
-    ],
-    "Efficienza Operativa": [
-        "Il modello AI riduce significativamente i tempi di processo.",
-        "Il modello AI aumenta la qualità dei servizi/prodotti offerti.",
-        "Il modello AI contribuisce significativamente alla riduzione dei costi.",
-        "Il modello AI contribuisce significativamente all'aumento dei ricavi.",
-        "Il modello AI è facilmente comprensibile e misurabile."
-    ],
-    "Coinvolgimento della Forza Lavoro": [
-        "Il modello AI ha un impatto positivo sulla produttività della forza lavoro e sulla gestione dei talenti."
-    ]
-}
-
-# Funzione per caricare i dati KPI/KQI/KRI
+# Load KPI/KQI/KRI Data
 def load_kpi_data(uploaded_file=None):
+    default_kpi_data = [
+        {"Business Objective": "Nuove Fonti di Creazione di Valore", "Tipo": "KPI", "Categoria": "Canali Digitali", "Focus": "Ricavi & Profitti", "Metriche": "Ordini, Ricavi, Traffico Clienti, Transazioni, Ordini Sociali"},
+        {"Business Objective": "Nuove Fonti di Creazione di Valore", "Tipo": "KPI", "Categoria": "Ecosistema Digitale", "Focus": "Ricavi & Profitti", "Metriche": "Partner & Reti, Referral & Profitti"},
+        {"Business Objective": "Nuove Fonti di Creazione di Valore", "Tipo": "KPI", "Categoria": "Integrazione Fisica", "Focus": "Ricavi & Profitti", "Metriche": "Prodotti Digitali, Prezzi, Promozioni, Nuovi Modelli di Business"},
+        {"Business Objective": "Coinvolgimento del Cliente", "Tipo": "KQI", "Categoria": "Tempo Risparmiato dal Cliente", "Focus": "Tempo Risparmiato", "Metriche": "Ore Risparmiate, Tempo per Completare, Per Richiesta"},
+        {"Business Objective": "Efficienza Operativa", "Tipo": "KPI", "Categoria": "Velocità di Risposta, Consegna", "Focus": "Tempo & Conformità", "Metriche": "Riduzione del Tempo di Consegna, % Conformità, Tempo di Attesa, Lavoro Completato"},
+        {"Business Objective": "Coinvolgimento della Forza Lavoro", "Tipo": "KRI", "Categoria": "Diversità, Equità & Inclusione", "Focus": "Performance & Inclusione", "Metriche": "Indice DEI %, Ore di Formazione, Miglioramento %"},
+        {"Business Objective": "Coinvolgimento della Forza Lavoro", "Tipo": "KQI", "Categoria": "Gestione del Talento", "Focus": "Performance & Ritenzione", "Metriche": "Produttività & Efficienza, % Ritenzione Talenti, % Turnover"},
+        {"Business Objective": "Innovazione", "Tipo": "KQI", "Categoria": "Sviluppo Prodotto", "Focus": "Innovazione", "Metriche": "Numero di Nuovi Prodotti, Tempo di Sviluppo, Percentuale di Innovazione"},
+        {"Business Objective": "Soddisfazione del Cliente", "Tipo": "KQI", "Categoria": "Feedback Cliente", "Focus": "Soddisfazione", "Metriche": "Net Promoter Score, Recensioni Positive, Tasso di Ritorno"},
+        {"Business Objective": "Sostenibilità", "Tipo": "KRI", "Categoria": "Impatto Ambientale", "Focus": "Sostenibilità", "Metriche": "Emissioni di CO2, Consumo Energetico, Uso di Risorse Rinnovabili"}
+    ]
+    
     if uploaded_file:
         try:
             df = pd.read_csv(uploaded_file)
-            # Verifica che le colonne necessarie esistano
             required_columns = {"Business Objective", "Tipo", "Categoria", "Focus", "Metriche"}
             if not required_columns.issubset(set(df.columns)):
                 missing = required_columns - set(df.columns)
                 st.error(f"Il file caricato manca delle seguenti colonne richieste: {', '.join(missing)}")
                 st.warning("Utilizzo dei dati KPI predefiniti.")
-                return pd.DataFrame(kpi_data)
+                return pd.DataFrame(default_kpi_data)
             st.success("Dati KPI/KQI/KRI caricati con successo.")
             return df
         except Exception as e:
             st.error(f"Errore nel caricamento del file: {e}. Utilizzo dei dati KPI predefiniti.")
-            return pd.DataFrame(kpi_data)
+            return pd.DataFrame(default_kpi_data)
     else:
-        return pd.DataFrame(kpi_data)
+        return pd.DataFrame(default_kpi_data)
 
-# Panoramica
-if choice == "Panoramica":
+# Likert Questions
+def get_likert_questions():
+    return {
+        "Nuove Fonti di Creazione di Valore": [
+            "Il modello AI facilita l'innovazione all'interno dell'azienda.",
+            "Il modello AI contribuisce a migliorare la soddisfazione del cliente.",
+            "Il modello AI è facilmente integrabile con i sistemi esistenti."
+        ],
+        "Coinvolgimento del Cliente": [
+            "Il coinvolgimento del cliente è aumentato grazie all'implementazione del modello AI.",
+            "Il modello AI supporta efficacemente gli obiettivi di sostenibilità.",
+            "Le raccomandazioni generate dall'AI sono azionabili e rilevanti per gli obiettivi aziendali."
+        ],
+        "Efficienza Operativa": [
+            "Il modello AI riduce significativamente i tempi di processo.",
+            "Il modello AI aumenta la qualità dei servizi/prodotti offerti.",
+            "Il modello AI contribuisce significativamente alla riduzione dei costi.",
+            "Il modello AI contribuisce significativamente all'aumento dei ricavi.",
+            "Il modello AI è facilmente comprensibile e misurabile."
+        ],
+        "Coinvolgimento della Forza Lavoro": [
+            "Il modello AI ha un impatto positivo sulla produttività della forza lavoro e sulla gestione dei talenti."
+        ]
+    }
+
+# Display Gauge Chart
+def display_gauge(score, title="Tangibility Score"):
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=score,
+        title={'text': title},
+        gauge={
+            'axis': {'range': [0, 100]},
+            'bar': {'color': "darkblue"},
+            'steps': [
+                {'range': [0, 33], 'color': "lightgray"},
+                {'range': [33, 66], 'color': "yellow"},
+                {'range': [66, 100], 'color': "lightgreen"}
+            ],
+            'threshold': {'line': {'color': "red", 'width': 4}, 'thickness': 0.75, 'value': score}
+        }
+    ))
+    st.plotly_chart(fig, use_container_width=True)
+
+# Display Matrix Plot
+def display_matrix(ease_score, value_score):
+    fig, ax = plt.subplots(figsize=(6, 6))
+    plt.axvline(50, color='grey', linestyle='--')  # Mid vertical
+    plt.axhline(50, color='grey', linestyle='--')  # Mid horizontal
+
+    # Labels
+    plt.text(20, 80, "Easy Value", ha="center", va="center", fontsize=12, fontweight='bold')
+    plt.text(80, 80, "Moonshots", ha="center", va="center", fontsize=12, fontweight='bold')
+    plt.text(20, 20, "Low Value", ha="center", va="center", fontsize=12, fontweight='bold')
+    plt.text(80, 20, "Money Pits", ha="center", va="center", fontsize=12, fontweight='bold')
+
+    # Place the dot
+    ax.scatter(ease_score, value_score, color="red", s=100)
+    plt.xlim(0, 100)
+    plt.ylim(0, 100)
+    plt.xticks(range(0, 101, 10))
+    plt.yticks(range(0, 101, 10))
+    plt.title("Ease of Implementation vs Value Delivered")
+    plt.xlabel("Ease of Implementation")
+    plt.ylabel("Value Delivered")
+    st.pyplot(fig, use_container_width=True)
+
+# Overview Section
+def show_overview():
     st.title("App di Valutazione Modello AI")
     st.image("https://streamlit.io/images/brand/streamlit-logo-secondary-colormark-darktext.png", width=200)
     st.markdown("""
@@ -82,8 +129,8 @@ if choice == "Panoramica":
     4. Fornisci feedback nella sezione **Feedback** per aiutare a perfezionare il sistema.
     """)
 
-# Input Modello AI
-elif choice == "Input Modello AI":
+# Input AI Model Section
+def input_ai_model():
     st.header("Descrivi il Tuo Modello/App AI")
     with st.form(key='ai_model_form'):
         ai_name = st.text_input("Nome del Modello/App AI", "es. Previsione di Abbandono Cliente")
@@ -100,160 +147,155 @@ elif choice == "Input Modello AI":
         else:
             st.error("Per favore, fornisci sia il Nome del Modello/App AI che la Descrizione.")
 
-# Valutazione
-elif choice == "Valutazione":
+# Evaluation Section
+def evaluate_ai_model():
     st.header("Valuta il Tuo Modello/App AI")
     if 'ai_name' not in st.session_state or 'ai_description' not in st.session_state:
         st.warning("Per favore, fornisci i dettagli del tuo modello/app AI nella sezione 'Input Modello AI' prima.")
-    else:
-        st.subheader(f"Modello/App AI: {st.session_state['ai_name']}")
-        st.write(f"**Descrizione:** {st.session_state['ai_description']}")
-        
-        # Creazione delle tabs per ciascun Business Objective
-        evaluation_tabs = st.tabs(["Nuove Fonti di Creazione di Valore", "Coinvolgimento del Cliente", "Efficienza Operativa", "Coinvolgimento della Forza Lavoro"])
-        responses = {}
-        
-        with st.form(key='evaluation_form'):
-            for tab, objective in zip(evaluation_tabs, likert_questions.keys()):
-                with tab:
-                    st.markdown(f"### {objective}")
-                    for question in likert_questions[objective]:
-                        responses[question] = st.slider(
-                            question,
-                            min_value=1,
-                            max_value=7,
-                            value=4,
-                            step=1,
-                            format="{}",
-                            help="1: Fortemente in disaccordo | 7: Fortemente d'accordo"
-                        )
-            submit_evaluation = st.form_submit_button(label='Invia Valutazione')
-        
-        if submit_evaluation:
-            st.session_state['evaluation'] = responses
-            st.success("Valutazione inviata con successo!")
+        return
+    
+    st.subheader(f"Modello/App AI: {st.session_state['ai_name']}")
+    st.write(f"**Descrizione:** {st.session_state['ai_description']}")
+    
+    likert_questions = get_likert_questions()
+    evaluation_tabs = st.tabs(likert_questions.keys())
+    responses = {}
+    
+    with st.form(key='evaluation_form'):
+        for tab, (objective, questions) in zip(evaluation_tabs, likert_questions.items()):
+            with tab:
+                st.markdown(f"### {objective}")
+                for question in questions:
+                    responses[question] = st.slider(
+                        question,
+                        min_value=1,
+                        max_value=7,
+                        value=4,
+                        step=1,
+                        format="{}",
+                        help="1: Fortemente in disaccordo | 7: Fortemente d'accordo"
+                    )
+        submit_evaluation = st.form_submit_button(label='Invia Valutazione')
+    
+    if submit_evaluation:
+        st.session_state['evaluation'] = responses
+        st.success("Valutazione inviata con successo!")
 
-# Risultati
-elif choice == "Risultati":
+# Results Section
+def show_results():
     st.header("Risultati della Valutazione")
     if 'evaluation' not in st.session_state:
         st.warning("Per favore, completa una valutazione nella sezione 'Valutazione' prima.")
-    else:
-        responses = st.session_state['evaluation']
-        kpi_df = st.session_state['kpi_data']
-        
-        # Mappatura delle domande ai Business Objectives
-        question_mapping = {
-            "Il modello AI facilita l'innovazione all'interno dell'azienda.": "Nuove Fonti di Creazione di Valore",
-            "Il modello AI contribuisce a migliorare la soddisfazione del cliente.": "Nuove Fonti di Creazione di Valore",
-            "Il modello AI è facilmente integrabile con i sistemi esistenti.": "Nuove Fonti di Creazione di Valore",
-            "Il modello AI raggiunge efficacemente l'obiettivo aziendale previsto.": "Nuove Fonti di Creazione di Valore",
-            "Il modello AI riduce significativamente i tempi di processo.": "Efficienza Operativa",
-            "Il modello AI aumenta la qualità dei servizi/prodotti offerti.": "Efficienza Operativa",
-            "Il modello AI contribuisce significativamente alla riduzione dei costi.": "Efficienza Operativa",
-            "Il modello AI contribuisce significativamente all'aumento dei ricavi.": "Efficienza Operativa",
-            "Il modello AI è facilmente comprensibile e misurabile.": "Efficienza Operativa",
-            "Il coinvolgimento del cliente è aumentato grazie all'implementazione del modello AI.": "Coinvolgimento del Cliente",
-            "Il modello AI supporta efficacemente gli obiettivi di sostenibilità.": "Coinvolgimento del Cliente",
-            "Le raccomandazioni generate dall'AI sono azionabili e rilevanti per gli obiettivi aziendali.": "Coinvolgimento del Cliente",
-            "Il modello AI ha un impatto positivo sulla produttività della forza lavoro e sulla gestione dei talenti.": "Coinvolgimento della Forza Lavoro"
-        }
-        
-        # Calcolo del punteggio per ogni Business Objective
-        business_scores = {}
-        for question, score in responses.items():
-            if question in question_mapping:
-                obj = question_mapping[question]
-                business_scores[obj] = business_scores.get(obj, 0) + score
-        
-        # Determinare i Business Objectives con punteggi sopra la media
-        avg_score = sum(business_scores.values()) / len(business_scores) if business_scores else 0
-        relevant_objectives = [obj for obj, score in business_scores.items() if score >= avg_score]
-        
-        # Filtrare KPI, KQI, KRI basati sui Business Objectives rilevanti
-        relevant_kpis = kpi_df[(kpi_df['Business Objective'].isin(relevant_objectives)) & (kpi_df['Tipo'] == "KPI")]
-        relevant_kqis = kpi_df[(kpi_df['Business Objective'].isin(relevant_objectives)) & (kpi_df['Tipo'] == "KQI")]
-        relevant_kris = kpi_df[(kpi_df['Business Objective'].isin(relevant_objectives)) & (kpi_df['Tipo'] == "KRI")]
-        
-        # Creazione delle tabs per ciascun Business Objective nei Risultati
-        result_tabs = st.tabs(["Nuove Fonti di Creazione di Valore", "Coinvolgimento del Cliente", "Efficienza Operativa", "Coinvolgimento della Forza Lavoro"])
-        
-        # Funzione per formattare KPI/KQI/KRI
-        def display_indicators(indicators, tipo):
-            if not indicators.empty:
-                for index, row in indicators.iterrows():
-                    categoria = row.get('Categoria', 'N/A')
-                    focus = row.get('Focus', 'N/A')
-                    metriche = row.get('Metriche', 'N/A')
-                    st.markdown(f"**Categoria {tipo}:** {categoria}")
-                    st.markdown(f"- **Focus:** {focus}")
-                    st.markdown(f"- **Metriche:** {metriche}")
-                    st.markdown("---")
-            else:
-                st.write(f"Nessun {tipo} rilevante trovato per questa categoria.")
-        
-        # Tab: Nuove Fonti di Creazione di Valore
-        with result_tabs[0]:
-            st.subheader("KPI Utilizzabili")
-            display_indicators(relevant_kpis[relevant_kpis['Business Objective'] == "Nuove Fonti di Creazione di Valore"], "KPI")
+        return
+    
+    responses = st.session_state['evaluation']
+    kpi_df = st.session_state['kpi_data']
+    likert_questions = get_likert_questions()
+    
+    # Mapping of questions to Business Objectives
+    question_mapping = {}
+    for objective, questions in likert_questions.items():
+        for question in questions:
+            question_mapping[question] = objective
+    
+    # Calculate scores per Business Objective
+    business_scores = {}
+    for question, score in responses.items():
+        obj = question_mapping.get(question)
+        if obj:
+            business_scores[obj] = business_scores.get(obj, 0) + score
+    
+    # Calculate average score to determine relevant objectives
+    avg_score = sum(business_scores.values()) / len(business_scores) if business_scores else 0
+    relevant_objectives = [obj for obj, score in business_scores.items() if score >= avg_score]
+    
+    # Filter KPI/KQI/KRI based on relevant objectives
+    relevant_kpis = kpi_df[(kpi_df['Business Objective'].isin(relevant_objectives)) & (kpi_df['Tipo'] == "KPI")]
+    relevant_kqis = kpi_df[(kpi_df['Business Objective'].isin(relevant_objectives)) & (kpi_df['Tipo'] == "KQI")]
+    relevant_kris = kpi_df[(kpi_df['Business Objective'].isin(relevant_objectives)) & (kpi_df['Tipo'] == "KRI")]
+    
+    # Tabs for each Business Objective
+    result_tabs = st.tabs(relevant_objectives)
+    
+    # Function to display indicators
+    def display_indicators(indicators, tipo):
+        if not indicators.empty:
+            for index, row in indicators.iterrows():
+                categoria = row.get('Categoria', 'N/A')
+                focus = row.get('Focus', 'N/A')
+                metriche = row.get('Metriche', 'N/A')
+                st.markdown(f"**Categoria {tipo}:** {categoria}")
+                st.markdown(f"- **Focus:** {focus}")
+                st.markdown(f"- **Metriche:** {metriche}")
+                st.markdown("---")
+        else:
+            st.write(f"Nessun {tipo} rilevante trovato per questa categoria.")
+    
+    for tab, objective in zip(result_tabs, relevant_objectives):
+        with tab:
+            st.subheader(f"KPI/KQI/KRI per {objective}")
+            st.markdown("**KPI Utilizzabili**")
+            display_indicators(relevant_kpis[relevant_kpis['Business Objective'] == objective], "KPI")
             
-            st.subheader("KQI Utilizzabili")
-            display_indicators(relevant_kqis[relevant_kqis['Business Objective'] == "Nuove Fonti di Creazione di Valore"], "KQI")
+            st.markdown("**KQI Utilizzabili**")
+            display_indicators(relevant_kqis[relevant_kqis['Business Objective'] == objective], "KQI")
             
-            st.subheader("KRI Utilizzabili")
-            display_indicators(relevant_kris[relevant_kris['Business Objective'] == "Nuove Fonti di Creazione di Valore"], "KRI")
-        
-        # Tab: Coinvolgimento del Cliente
-        with result_tabs[1]:
-            st.subheader("KPI Utilizzabili")
-            display_indicators(relevant_kpis[relevant_kpis['Business Objective'] == "Coinvolgimento del Cliente"], "KPI")
-            
-            st.subheader("KQI Utilizzabili")
-            display_indicators(relevant_kqis[relevant_kqis['Business Objective'] == "Coinvolgimento del Cliente"], "KQI")
-            
-            st.subheader("KRI Utilizzabili")
-            display_indicators(relevant_kris[relevant_kris['Business Objective'] == "Coinvolgimento del Cliente"], "KRI")
-        
-        # Tab: Efficienza Operativa
-        with result_tabs[2]:
-            st.subheader("KPI Utilizzabili")
-            display_indicators(relevant_kpis[relevant_kpis['Business Objective'] == "Efficienza Operativa"], "KPI")
-            
-            st.subheader("KQI Utilizzabili")
-            display_indicators(relevant_kqis[relevant_kqis['Business Objective'] == "Efficienza Operativa"], "KQI")
-            
-            st.subheader("KRI Utilizzabili")
-            display_indicators(relevant_kris[relevant_kris['Business Objective'] == "Efficienza Operativa"], "KRI")
-        
-        # Tab: Coinvolgimento della Forza Lavoro
-        with result_tabs[3]:
-            st.subheader("KPI Utilizzabili")
-            display_indicators(relevant_kpis[relevant_kpis['Business Objective'] == "Coinvolgimento della Forza Lavoro"], "KPI")
-            
-            st.subheader("KQI Utilizzabili")
-            display_indicators(relevant_kqis[relevant_kqis['Business Objective'] == "Coinvolgimento della Forza Lavoro"], "KQI")
-            
-            st.subheader("KRI Utilizzabili")
-            display_indicators(relevant_kris[relevant_kris['Business Objective'] == "Coinvolgimento della Forza Lavoro"], "KRI")
-        
-        # Valutazione del Modello AI
-        st.subheader("Valutazione del Modello")
-        eval_summary = pd.DataFrame({
-            "Aspetto": ["Comprensibilità e Misurabilità", "Contributo alla Riduzione dei Costi", "Contributo all'Aumento dei Ricavi"],
-            "Valutazione": [
-                responses.get("Il modello AI è facilmente comprensibile e misurabile.", 4),
-                responses.get("Il modello AI contribuisce significativamente alla riduzione dei costi.", 4),
-                responses.get("Il modello AI contribuisce significativamente all'aumento dei ricavi.", 4)
-            ]
-        })
-        st.table(eval_summary)
-        
-        st.markdown("### Valutazione Dettagliata")
-        for index, row in eval_summary.iterrows():
-            st.markdown(f"- **{row['Aspetto']}:** {row['Valutazione']}")
+            st.markdown("**KRI Utilizzabili**")
+            display_indicators(relevant_kris[relevant_kris['Business Objective'] == objective], "KRI")
+    
+    # Additional Visualizations
+    st.markdown("---")
+    st.subheader("Valutazione Complessiva")
+    
+    # Calculate overall scores
+    ease_score, value_score = calculate_overall_scores(responses)
+    tangibility_score = (value_score + ease_score) / 2  # Average for tangibility
+    
+    # Tabs for overall visualizations
+    overall_tabs = st.tabs(["Valutazione Complessiva", "Nuove Fonti di Creazione di Valore", 
+                            "Coinvolgimento del Cliente", "Efficienza Operativa", "Coinvolgimento della Forza Lavoro"])
+    
+    with overall_tabs[0]:
+        st.markdown("### **Tangibility of the AI Model**")
+        display_gauge(tangibility_score, "Model Tangibility Score")
+    
+        st.markdown("### **Matrix Representation**")
+        display_matrix(ease_score, value_score)
+        st.markdown(f"**Ease of Implementation Score:** {ease_score:.2f}")
+        st.markdown(f"**Value Delivered Score:** {value_score:.2f}")
+    
+    st.markdown("---")
+    st.subheader("Valutazione Dettagliata")
+    eval_summary = pd.DataFrame({
+        "Aspetto": [
+            "Comprensibilità e Misurabilità", 
+            "Contributo alla Riduzione dei Costi", 
+            "Contributo all'Aumento dei Ricavi"
+        ],
+        "Valutazione": [
+            responses.get("Il modello AI è facilmente comprensibile e misurabile.", 4),
+            responses.get("Il modello AI contribuisce significativamente alla riduzione dei costi.", 4),
+            responses.get("Il modello AI contribuisce significativamente all'aumento dei ricavi.", 4)
+        ]
+    })
+    st.table(eval_summary)
+    
+    st.markdown("### Valutazione Dettagliata")
+    for index, row in eval_summary.iterrows():
+        st.markdown(f"- **{row['Aspetto']}:** {row['Valutazione']}")
 
-# Feedback
-elif choice == "Feedback":
+# Function to calculate overall scores
+def calculate_overall_scores(responses):
+    ease_questions = [
+        "Il modello AI è facilmente integrabile con i sistemi esistenti.",
+        "Il modello AI è facilmente comprensibile e misurabile."
+    ]
+    value_score = sum(responses.values()) / len(responses) * 14.3  # Scale to 100
+    ease_score = sum([responses.get(q, 4) for q in ease_questions]) / len(ease_questions) * 14.3
+    return ease_score, value_score
+
+# Feedback Section
+def feedback_section():
     st.header("Fornisci il Tuo Feedback")
     with st.form(key='feedback_form'):
         st.markdown("### Valuta l'Esperienza dell'App")
@@ -297,8 +339,32 @@ elif choice == "Feedback":
         st.write("**I Tuoi Commenti:**")
         st.write(comments)
 
-st.markdown("""
----
-**Realizzato con Streamlit e Python**  
-[Streamlit](https://streamlit.io/) | [Python](https://www.python.org/)
-""")
+# Main Function to Render Pages
+def main():
+    choice = sidebar_navigation()
+    
+    if choice == "Panoramica":
+        show_overview()
+    
+    elif choice == "Input Modello AI":
+        input_ai_model()
+    
+    elif choice == "Valutazione":
+        evaluate_ai_model()
+    
+    elif choice == "Risultati":
+        show_results()
+    
+    elif choice == "Feedback":
+        feedback_section()
+    
+    # Footer
+    st.markdown("""
+    ---
+    **Realizzato con Streamlit e Python**  
+    [Streamlit](https://streamlit.io/) | [Python](https://www.python.org/)
+    """)
+
+# Run the app
+if __name__ == "__main__":
+    main()
