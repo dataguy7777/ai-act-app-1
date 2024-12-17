@@ -45,6 +45,9 @@ likert_questions = {
     ]
 }
 
+# Domande aggiuntive convertite in scala Likert (in italiano)
+# Ora integrate nei Business Objectives appropriati
+
 # Funzione per caricare i dati KPI/KQI/KRI
 def load_kpi_data(uploaded_file=None):
     if uploaded_file:
@@ -120,19 +123,6 @@ elif choice == "Valutazione":
                             format="{}",
                             help="1: Fortemente in disaccordo | 7: Fortemente d'accordo"
                         )
-            # Domande aggiuntive convertite in scala Likert
-            st.markdown("---")
-            st.markdown("### Valutazioni Aggiuntive")
-            for question in additional_questions:
-                responses[question] = st.slider(
-                    question,
-                    min_value=1,
-                    max_value=7,
-                    value=4,
-                    step=1,
-                    format="{}",
-                    help="1: Fortemente in disaccordo | 7: Fortemente d'accordo"
-                )
             submit_evaluation = st.form_submit_button(label='Invia Valutazione')
         
         if submit_evaluation:
@@ -150,21 +140,19 @@ elif choice == "Risultati":
         
         # Mappatura delle domande ai Business Objectives
         question_mapping = {
-            "Il modello AI raggiunge efficacemente l'obiettivo aziendale previsto.": "Nuove Fonti di Creazione di Valore",
             "Il modello AI facilita l'innovazione all'interno dell'azienda.": "Nuove Fonti di Creazione di Valore",
             "Il modello AI contribuisce a migliorare la soddisfazione del cliente.": "Nuove Fonti di Creazione di Valore",
             "Il modello AI è facilmente integrabile con i sistemi esistenti.": "Nuove Fonti di Creazione di Valore",
+            "Il modello AI raggiunge efficacemente l'obiettivo aziendale previsto.": "Nuove Fonti di Creazione di Valore",
+            "Il modello AI riduce significativamente i tempi di processo.": "Efficienza Operativa",
+            "Il modello AI aumenta la qualità dei servizi/prodotti offerti.": "Efficienza Operativa",
             "Il modello AI contribuisce significativamente alla riduzione dei costi.": "Efficienza Operativa",
             "Il modello AI contribuisce significativamente all'aumento dei ricavi.": "Efficienza Operativa",
             "Il modello AI è facilmente comprensibile e misurabile.": "Efficienza Operativa",
-            "Il modello AI riduce significativamente i tempi di processo.": "Efficienza Operativa",
-            "Il modello AI aumenta la qualità dei servizi/prodotti offerti.": "Efficienza Operativa",
             "Il coinvolgimento del cliente è aumentato grazie all'implementazione del modello AI.": "Coinvolgimento del Cliente",
             "Il modello AI supporta efficacemente gli obiettivi di sostenibilità.": "Coinvolgimento del Cliente",
             "Le raccomandazioni generate dall'AI sono azionabili e rilevanti per gli obiettivi aziendali.": "Coinvolgimento del Cliente",
-            "Il modello AI ha un impatto positivo sulla produttività della forza lavoro e sulla gestione dei talenti.": "Coinvolgimento della Forza Lavoro",
-            "I KQI suggeriti forniscono preziose intuizioni sulla qualità del modello AI.": "Coinvolgimento della Forza Lavoro",
-            "I KRI aiutano a mitigare i rischi associati all'applicazione AI.": "Coinvolgimento della Forza Lavoro"
+            "Il modello AI ha un impatto positivo sulla produttività della forza lavoro e sulla gestione dei talenti.": "Coinvolgimento della Forza Lavoro"
         }
         
         # Calcolo del punteggio per ogni Business Objective
