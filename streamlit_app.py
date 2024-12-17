@@ -45,18 +45,22 @@ likert_questions = {
     ]
 }
 
-# Domande aggiuntive convertite in scala Likert (in italiano)
-# Ora integrate nei Business Objectives appropriati
-
 # Funzione per caricare i dati KPI/KQI/KRI
 def load_kpi_data(uploaded_file=None):
     if uploaded_file:
         try:
             df = pd.read_csv(uploaded_file)
+            # Verifica che le colonne necessarie esistano
+            required_columns = {"Business Objective", "Tipo", "Categoria", "Focus", "Metriche"}
+            if not required_columns.issubset(set(df.columns)):
+                missing = required_columns - set(df.columns)
+                st.error(f"Il file caricato manca delle seguenti colonne richieste: {', '.join(missing)}")
+                st.warning("Utilizzo dei dati KPI predefiniti.")
+                return pd.DataFrame(kpi_data)
             st.success("Dati KPI/KQI/KRI caricati con successo.")
             return df
-        except:
-            st.error("Errore nel caricamento del file. Utilizzo dei dati KPI predefiniti.")
+        except Exception as e:
+            st.error(f"Errore nel caricamento del file: {e}. Utilizzo dei dati KPI predefiniti.")
             return pd.DataFrame(kpi_data)
     else:
         return pd.DataFrame(kpi_data)
@@ -178,9 +182,12 @@ elif choice == "Risultati":
         def display_indicators(indicators, tipo):
             if not indicators.empty:
                 for index, row in indicators.iterrows():
-                    st.markdown(f"**Categoria {tipo}:** {row['Categoria']}")
-                    st.markdown(f"- **Focus:** {row['Focus']}")
-                    st.markdown(f"- **Metriche:** {row['Metriche']}")
+                    categoria = row.get('Categoria', 'N/A')
+                    focus = row.get('Focus', 'N/A')
+                    metriche = row.get('Metriche', 'N/A')
+                    st.markdown(f"**Categoria {tipo}:** {categoria}")
+                    st.markdown(f"- **Focus:** {focus}")
+                    st.markdown(f"- **Metriche:** {metriche}")
                     st.markdown("---")
             else:
                 st.write(f"Nessun {tipo} rilevante trovato per questa categoria.")
