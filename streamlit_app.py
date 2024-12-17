@@ -44,6 +44,7 @@ def load_kpi_data(uploaded_file=None):
             st.success("Uploaded KPI/KQI/KRI data loaded successfully.")
             return df
         except:
+            st.error("Error loading uploaded file. Using default KPI data.")
             return pd.DataFrame(kpi_data)
     else:
         return pd.DataFrame(kpi_data)
@@ -90,11 +91,23 @@ elif choice == "Evaluation":
         st.write(f"**Description:** {st.session_state['ai_description']}")
         with st.form(key='evaluation_form'):
             st.markdown("### Evaluation Questionnaire")
+            st.markdown("""
+            **Scale:**
+            - **1**: Strongly Disagree
+            - **4**: Neutral
+            - **7**: Strongly Agree
+            """)
             col1, col2 = st.columns(2)
             responses = {}
             for i, question in enumerate(likert_questions):
                 with col1 if i % 2 == 0 else col2:
-                    responses[question] = st.slider(question, 1, 7, 4, format="{}")
+                    responses[question] = st.select_slider(
+                        question,
+                        options=range(1, 8),
+                        value=4,
+                        format_func=lambda x: f"{x}"
+                    )
+            st.markdown("---")
             for question in additional_questions:
                 if question == "Is the AI model tangible or intangible?":
                     responses[question] = st.selectbox(question, options=["Tangible", "Intangible"])
@@ -133,13 +146,28 @@ elif choice == "Results":
         })
         st.table(eval_summary)
         
-        fig_eval = px.bar(eval_summary, x='Aspect', y='Evaluation', title="Model Evaluation", text='Evaluation')
+        # Enhanced Visualization for Model Evaluation
+        fig_eval = px.bar(eval_summary, 
+                          x='Aspect', 
+                          y='Evaluation', 
+                          title="Model Evaluation",
+                          text='Evaluation',
+                          color='Aspect',
+                          color_discrete_sequence=px.colors.qualitative.Pastel)
+        fig_eval.update_traces(texttemplate='%{text}', textposition='outside')
+        fig_eval.update_layout(uniformtext_minsize=8, uniformtext_mode='hide', yaxis_title="")
         st.plotly_chart(fig_eval, use_container_width=True)
 
 elif choice == "Feedback":
     st.header("Provide Your Feedback")
     with st.form(key='feedback_form'):
-        st.subheader("Rate the App Experience")
+        st.markdown("### Rate the App Experience")
+        st.markdown("""
+        **Scale:**
+        - **1**: Strongly Disagree
+        - **4**: Neutral
+        - **7**: Strongly Agree
+        """)
         feedback_scores = {}
         feedback_questions = [
             "The app interface is user-friendly.",
@@ -148,8 +176,16 @@ elif choice == "Feedback":
             "The visualizations effectively represent the data.",
             "Overall, I am satisfied with the app."
         ]
-        for question in feedback_questions:
-            feedback_scores[question] = st.slider(question, 1, 7, 4, format="{}")
+        col1, col2 = st.columns(2)
+        for i, question in enumerate(feedback_questions):
+            with col1 if i % 2 == 0 else col2:
+                feedback_scores[question] = st.select_slider(
+                    question,
+                    options=range(1, 8),
+                    value=4,
+                    format_func=lambda x: f"{x}"
+                )
+        st.markdown("---")
         st.subheader("Additional Comments")
         comments = st.text_area("Your Comments", height=100)
         submit_feedback = st.form_submit_button(label='Submit Feedback')
