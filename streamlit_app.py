@@ -21,31 +21,29 @@ kpi_data = [
     {"Business Objective": "Sostenibilità", "Tipo": "KRI", "Categoria": "Impatto Ambientale", "Focus": "Sostenibilità", "Metriche": "Emissioni di CO2, Consumo Energetico, Uso di Risorse Rinnovabili"}
 ]
 
-# Domande Likert (in italiano)
-likert_questions = [
-    "Il modello AI raggiunge efficacemente l'obiettivo aziendale previsto.",
-    "I KPI identificati sono appropriati per misurare le prestazioni del modello AI.",
-    "I KQI suggeriti forniscono preziose intuizioni sulla qualità del modello AI.",
-    "I KRI aiutano a mitigare i rischi associati all'applicazione AI.",
-    "Il modello AI è allineato con i requisiti di conformità e regolamentazione (es. AI Act).",
-    "L'applicazione AI migliora l'efficienza operativa misurata dai KPI rilevanti.",
-    "Il coinvolgimento del cliente è aumentato grazie all'implementazione del modello AI.",
-    "Il modello AI ha un impatto positivo sulla produttività della forza lavoro e sulla gestione dei talenti.",
-    "Il modello AI supporta efficacemente gli obiettivi di sostenibilità.",
-    "Le raccomandazioni generate dall'AI sono azionabili e rilevanti per gli obiettivi aziendali.",
-    "Il modello AI facilita l'innovazione all'interno dell'azienda.",
-    "Il modello AI contribuisce a migliorare la soddisfazione del cliente.",
-    "Il modello AI è facilmente integrabile con i sistemi esistenti.",
-    "Il modello AI riduce significativamente i tempi di processo.",
-    "Il modello AI aumenta la qualità dei servizi/prodotti offerti."
-]
-
-# Domande aggiuntive convertite in scala Likert (in italiano)
-additional_questions = [
-    "Il modello AI è facilmente comprensibile e misurabile.",
-    "Il modello AI contribuisce significativamente alla riduzione dei costi.",
-    "Il modello AI contribuisce significativamente all'aumento dei ricavi."
-]
+# Domande Likert (in italiano) associate ai Business Objectives
+likert_questions = {
+    "Nuove Fonti di Creazione di Valore": [
+        "Il modello AI facilita l'innovazione all'interno dell'azienda.",
+        "Il modello AI contribuisce a migliorare la soddisfazione del cliente.",
+        "Il modello AI è facilmente integrabile con i sistemi esistenti."
+    ],
+    "Coinvolgimento del Cliente": [
+        "Il coinvolgimento del cliente è aumentato grazie all'implementazione del modello AI.",
+        "Il modello AI supporta efficacemente gli obiettivi di sostenibilità.",
+        "Le raccomandazioni generate dall'AI sono azionabili e rilevanti per gli obiettivi aziendali."
+    ],
+    "Efficienza Operativa": [
+        "Il modello AI riduce significativamente i tempi di processo.",
+        "Il modello AI aumenta la qualità dei servizi/prodotti offerti.",
+        "Il modello AI contribuisce significativamente alla riduzione dei costi.",
+        "Il modello AI contribuisce significativamente all'aumento dei ricavi.",
+        "Il modello AI è facilmente comprensibile e misurabile."
+    ],
+    "Coinvolgimento della Forza Lavoro": [
+        "Il modello AI ha un impatto positivo sulla produttività della forza lavoro e sulla gestione dei talenti."
+    ]
+}
 
 # Funzione per caricare i dati KPI/KQI/KRI
 def load_kpi_data(uploaded_file=None):
@@ -103,37 +101,38 @@ elif choice == "Valutazione":
     else:
         st.subheader(f"Modello/App AI: {st.session_state['ai_name']}")
         st.write(f"**Descrizione:** {st.session_state['ai_description']}")
+        
+        # Creazione delle tabs per ciascun Business Objective
+        evaluation_tabs = st.tabs(["Nuove Fonti di Creazione di Valore", "Coinvolgimento del Cliente", "Efficienza Operativa", "Coinvolgimento della Forza Lavoro"])
+        responses = {}
+        
         with st.form(key='evaluation_form'):
-            st.markdown("### Questionario di Valutazione")
-            st.markdown("""
-            **Scala:**
-            - **1**: Fortemente in disaccordo
-            - **4**: Neutrale
-            - **7**: Fortemente d'accordo
-            """)
-            col1, col2 = st.columns(2)
-            responses = {}
-            for i, question in enumerate(likert_questions):
-                with col1 if i % 2 == 0 else col2:
-                    responses[question] = st.slider(
-                        question,
-                        min_value=1,
-                        max_value=7,
-                        value=4,
-                        step=1,
-                        format="{}"
-                    )
+            for tab, objective in zip(evaluation_tabs, likert_questions.keys()):
+                with tab:
+                    st.markdown(f"### {objective}")
+                    for question in likert_questions[objective]:
+                        responses[question] = st.slider(
+                            question,
+                            min_value=1,
+                            max_value=7,
+                            value=4,
+                            step=1,
+                            format="{}",
+                            help="1: Fortemente in disaccordo | 7: Fortemente d'accordo"
+                        )
+            # Domande aggiuntive convertite in scala Likert
             st.markdown("---")
+            st.markdown("### Valutazioni Aggiuntive")
             for question in additional_questions:
-                with st.container():
-                    responses[question] = st.slider(
-                        question,
-                        min_value=1,
-                        max_value=7,
-                        value=4,
-                        step=1,
-                        format="{}"
-                    )
+                responses[question] = st.slider(
+                    question,
+                    min_value=1,
+                    max_value=7,
+                    value=4,
+                    step=1,
+                    format="{}",
+                    help="1: Fortemente in disaccordo | 7: Fortemente d'accordo"
+                )
             submit_evaluation = st.form_submit_button(label='Invia Valutazione')
         
         if submit_evaluation:
@@ -152,20 +151,20 @@ elif choice == "Risultati":
         # Mappatura delle domande ai Business Objectives
         question_mapping = {
             "Il modello AI raggiunge efficacemente l'obiettivo aziendale previsto.": "Nuove Fonti di Creazione di Valore",
-            "I KPI identificati sono appropriati per misurare le prestazioni del modello AI.": "Nuove Fonti di Creazione di Valore",
-            "I KQI suggeriti forniscono preziose intuizioni sulla qualità del modello AI.": "Coinvolgimento del Cliente",
-            "I KRI aiutano a mitigare i rischi associati all'applicazione AI.": "Coinvolgimento della Forza Lavoro",
-            "Il modello AI è allineato con i requisiti di conformità e regolamentazione (es. AI Act).": "Efficienza Operativa",
-            "L'applicazione AI migliora l'efficienza operativa misurata dai KPI rilevanti.": "Efficienza Operativa",
-            "Il coinvolgimento del cliente è aumentato grazie all'implementazione del modello AI.": "Coinvolgimento del Cliente",
-            "Il modello AI ha un impatto positivo sulla produttività della forza lavoro e sulla gestione dei talenti.": "Coinvolgimento della Forza Lavoro",
-            "Il modello AI supporta efficacemente gli obiettivi di sostenibilità.": "Sostenibilità",
-            "Le raccomandazioni generate dall'AI sono azionabili e rilevanti per gli obiettivi aziendali.": "Nuove Fonti di Creazione di Valore",
-            "Il modello AI facilita l'innovazione all'interno dell'azienda.": "Innovazione",
-            "Il modello AI contribuisce a migliorare la soddisfazione del cliente.": "Soddisfazione del Cliente",
-            "Il modello AI è facilmente integrabile con i sistemi esistenti.": "Efficienza Operativa",
+            "Il modello AI facilita l'innovazione all'interno dell'azienda.": "Nuove Fonti di Creazione di Valore",
+            "Il modello AI contribuisce a migliorare la soddisfazione del cliente.": "Nuove Fonti di Creazione di Valore",
+            "Il modello AI è facilmente integrabile con i sistemi esistenti.": "Nuove Fonti di Creazione di Valore",
+            "Il modello AI contribuisce significativamente alla riduzione dei costi.": "Efficienza Operativa",
+            "Il modello AI contribuisce significativamente all'aumento dei ricavi.": "Efficienza Operativa",
+            "Il modello AI è facilmente comprensibile e misurabile.": "Efficienza Operativa",
             "Il modello AI riduce significativamente i tempi di processo.": "Efficienza Operativa",
-            "Il modello AI aumenta la qualità dei servizi/prodotti offerti.": "Soddisfazione del Cliente"
+            "Il modello AI aumenta la qualità dei servizi/prodotti offerti.": "Efficienza Operativa",
+            "Il coinvolgimento del cliente è aumentato grazie all'implementazione del modello AI.": "Coinvolgimento del Cliente",
+            "Il modello AI supporta efficacemente gli obiettivi di sostenibilità.": "Coinvolgimento del Cliente",
+            "Le raccomandazioni generate dall'AI sono azionabili e rilevanti per gli obiettivi aziendali.": "Coinvolgimento del Cliente",
+            "Il modello AI ha un impatto positivo sulla produttività della forza lavoro e sulla gestione dei talenti.": "Coinvolgimento della Forza Lavoro",
+            "I KQI suggeriti forniscono preziose intuizioni sulla qualità del modello AI.": "Coinvolgimento della Forza Lavoro",
+            "I KRI aiutano a mitigare i rischi associati all'applicazione AI.": "Coinvolgimento della Forza Lavoro"
         }
         
         # Calcolo del punteggio per ogni Business Objective
@@ -184,48 +183,73 @@ elif choice == "Risultati":
         relevant_kqis = kpi_df[(kpi_df['Business Objective'].isin(relevant_objectives)) & (kpi_df['Tipo'] == "KQI")]
         relevant_kris = kpi_df[(kpi_df['Business Objective'].isin(relevant_objectives)) & (kpi_df['Tipo'] == "KRI")]
         
-        # Risultati KPI
-        st.subheader("KPI Utilizzabili")
-        if not relevant_kpis.empty:
-            for index, row in relevant_kpis.iterrows():
-                st.markdown(f"**Categoria KPI:** {row['Categoria']}")
-                st.markdown(f"- **Focus:** {row['Focus']}")
-                st.markdown(f"- **Metriche:** {row['Metriche']}")
-                st.markdown("---")
-        else:
-            st.write("Nessun KPI rilevante trovato basato sulla valutazione.")
+        # Creazione delle tabs per ciascun Business Objective nei Risultati
+        result_tabs = st.tabs(["Nuove Fonti di Creazione di Valore", "Coinvolgimento del Cliente", "Efficienza Operativa", "Coinvolgimento della Forza Lavoro"])
         
-        # Risultati KQI
-        st.subheader("KQI Utilizzabili")
-        if not relevant_kqis.empty:
-            for index, row in relevant_kqis.iterrows():
-                st.markdown(f"**Categoria KQI:** {row['Categoria']}")
-                st.markdown(f"- **Focus:** {row['Focus']}")
-                st.markdown(f"- **Metriche:** {row['Metriche']}")
-                st.markdown("---")
-        else:
-            st.write("Nessun KQI rilevante trovato basato sulla valutazione.")
+        # Funzione per formattare KPI/KQI/KRI
+        def display_indicators(indicators, tipo):
+            if not indicators.empty:
+                for index, row in indicators.iterrows():
+                    st.markdown(f"**Categoria {tipo}:** {row['Categoria']}")
+                    st.markdown(f"- **Focus:** {row['Focus']}")
+                    st.markdown(f"- **Metriche:** {row['Metriche']}")
+                    st.markdown("---")
+            else:
+                st.write(f"Nessun {tipo} rilevante trovato per questa categoria.")
         
-        # Risultati KRI
-        st.subheader("KRI Utilizzabili")
-        if not relevant_kris.empty:
-            for index, row in relevant_kris.iterrows():
-                st.markdown(f"**Categoria KRI:** {row['Categoria']}")
-                st.markdown(f"- **Focus:** {row['Focus']}")
-                st.markdown(f"- **Metriche:** {row['Metriche']}")
-                st.markdown("---")
-        else:
-            st.write("Nessun KRI rilevante trovato basato sulla valutazione.")
+        # Tab: Nuove Fonti di Creazione di Valore
+        with result_tabs[0]:
+            st.subheader("KPI Utilizzabili")
+            display_indicators(relevant_kpis[relevant_kpis['Business Objective'] == "Nuove Fonti di Creazione di Valore"], "KPI")
+            
+            st.subheader("KQI Utilizzabili")
+            display_indicators(relevant_kqis[relevant_kqis['Business Objective'] == "Nuove Fonti di Creazione di Valore"], "KQI")
+            
+            st.subheader("KRI Utilizzabili")
+            display_indicators(relevant_kris[relevant_kris['Business Objective'] == "Nuove Fonti di Creazione di Valore"], "KRI")
         
-        # Valutazione del Modello
+        # Tab: Coinvolgimento del Cliente
+        with result_tabs[1]:
+            st.subheader("KPI Utilizzabili")
+            display_indicators(relevant_kpis[relevant_kpis['Business Objective'] == "Coinvolgimento del Cliente"], "KPI")
+            
+            st.subheader("KQI Utilizzabili")
+            display_indicators(relevant_kqis[relevant_kqis['Business Objective'] == "Coinvolgimento del Cliente"], "KQI")
+            
+            st.subheader("KRI Utilizzabili")
+            display_indicators(relevant_kris[relevant_kris['Business Objective'] == "Coinvolgimento del Cliente"], "KRI")
+        
+        # Tab: Efficienza Operativa
+        with result_tabs[2]:
+            st.subheader("KPI Utilizzabili")
+            display_indicators(relevant_kpis[relevant_kpis['Business Objective'] == "Efficienza Operativa"], "KPI")
+            
+            st.subheader("KQI Utilizzabili")
+            display_indicators(relevant_kqis[relevant_kqis['Business Objective'] == "Efficienza Operativa"], "KQI")
+            
+            st.subheader("KRI Utilizzabili")
+            display_indicators(relevant_kris[relevant_kris['Business Objective'] == "Efficienza Operativa"], "KRI")
+        
+        # Tab: Coinvolgimento della Forza Lavoro
+        with result_tabs[3]:
+            st.subheader("KPI Utilizzabili")
+            display_indicators(relevant_kpis[relevant_kpis['Business Objective'] == "Coinvolgimento della Forza Lavoro"], "KPI")
+            
+            st.subheader("KQI Utilizzabili")
+            display_indicators(relevant_kqis[relevant_kqis['Business Objective'] == "Coinvolgimento della Forza Lavoro"], "KQI")
+            
+            st.subheader("KRI Utilizzabili")
+            display_indicators(relevant_kris[relevant_kris['Business Objective'] == "Coinvolgimento della Forza Lavoro"], "KRI")
+        
+        # Valutazione del Modello AI
         st.subheader("Valutazione del Modello")
-        tangible = responses.get("Il modello AI è facilmente comprensibile e misurabile?", 4)
-        cost_impact = responses.get("Il modello AI contribuisce significativamente alla riduzione dei costi.", 4)
-        revenue_impact = responses.get("Il modello AI contribuisce significativamente all'aumento dei ricavi.", 4)
-        
         eval_summary = pd.DataFrame({
             "Aspetto": ["Comprensibilità e Misurabilità", "Contributo alla Riduzione dei Costi", "Contributo all'Aumento dei Ricavi"],
-            "Valutazione": [tangible, cost_impact, revenue_impact]
+            "Valutazione": [
+                responses.get("Il modello AI è facilmente comprensibile e misurabile.", 4),
+                responses.get("Il modello AI contribuisce significativamente alla riduzione dei costi.", 4),
+                responses.get("Il modello AI contribuisce significativamente all'aumento dei ricavi.", 4)
+            ]
         })
         st.table(eval_summary)
         
@@ -261,7 +285,8 @@ elif choice == "Feedback":
                     max_value=7,
                     value=4,
                     step=1,
-                    format="{}"
+                    format="{}",
+                    help="1: Fortemente in disaccordo | 7: Fortemente d'accordo"
                 )
         st.markdown("---")
         st.subheader("Commenti Aggiuntivi")
