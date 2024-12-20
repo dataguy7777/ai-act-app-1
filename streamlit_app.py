@@ -47,7 +47,6 @@ def load_kpi_data(uploaded_file=None, scenario=None):
 
     Args:
         uploaded_file (UploadedFile, optional): Uploaded CSV file.  
-            example: Load a CSV with columns: "Business Objective", "Tipo", "Categoria", "Focus", "Metriche".
         scenario (str, optional): Scenario to load additional KPI data. 
             e.g. "Churn" to load extended marketing & sales metrics.
 
@@ -67,11 +66,9 @@ def load_kpi_data(uploaded_file=None, scenario=None):
         {"Business Objective": "Sostenibilità", "Tipo": "KRI", "Categoria": "Impatto Ambientale", "Focus": "Sostenibilità", "Metriche": "Emissioni di CO2, Consumo Energetico, Uso di Risorse Rinnovabili"}
     ]
     
-    # Additional Marketing & Sales KPIs focusing on Customer Engagement and Churn
-    # The user provided a large table. Here we extract a single relevant line as an example.
-    # For churn scenario, we add a KPI that focuses on churn reduction.
+    # Additional churn-focused KPI if scenario is chosen
     churn_kpi_data = [
-        {"Business Objective": "Coinvolgimento del Cliente", "Tipo": "KPI", "Categoria": "Churn Reduction", "Focus": "Retenzione", "Metriche": "Tasso Churn pre/post"},
+        {"Business Objective": "Coinvolgimento del Cliente", "Tipo": "KPI", "Categoria": "Churn Reduction", "Focus": "Retenzione", "Metriche": "Tasso Churn pre/post"}
     ]
 
     if uploaded_file:
@@ -105,7 +102,7 @@ def load_kpi_data(uploaded_file=None, scenario=None):
 def get_likert_questions(scenario=None):
     """
     Get a dictionary of business objectives mapped to their respective Likert scale questions.
-    If scenario is 'Churn', we add a question related to churn reduction.
+    If scenario is 'Churn', we add a churn-related question under 'Coinvolgimento del Cliente'.
 
     Args:
         scenario (str, optional): If 'Churn', include churn-related question.
@@ -136,7 +133,6 @@ def get_likert_questions(scenario=None):
         ]
     }
 
-    # If scenario is churn, add a churn-related question under Coinvolgimento del Cliente
     if scenario == "Churn":
         base_questions["Coinvolgimento del Cliente"].append(
             "Il modello di AI ha contribuito a ridurre il churn del cliente."
@@ -150,7 +146,7 @@ def display_gauge(score, title="Tangibility Score"):
 
     Args:
         score (float): The score to be displayed on the gauge.
-        title (str, optional): Title of the gauge. example: "Model Tangibility Score".
+        title (str, optional): Title of the gauge.
     """
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
@@ -194,16 +190,13 @@ def display_matrix(ease_score, value_score):
     plt.xticks(range(0, 101, 10))
     plt.yticks(range(0, 101, 10))
     plt.title("Ease of Implementation vs Value Delivered")
-    plt.xlabel("Ease of Implementation")
-    plt.ylabel("Value Delivered")
+    plt.xlabel("Ease of Implementation (0-100)")
+    plt.ylabel("Value Delivered (0-100)")
     st.pyplot(fig, use_container_width=True)
 
 def input_ai_model():
     """
     Renders a form to input AI Model details and optionally upload KPI/KQI/KRI data.
-
-    Returns:
-        None
     """
     st.header("Descrivi il Tuo Modello/App AI")
     with st.form(key='ai_model_form'):
@@ -215,12 +208,9 @@ def input_ai_model():
         submit_button = st.form_submit_button(label='Salva Descrizione')
     
     if submit_button:
-        # Logging input validation
-        st.info("Verifica degli input del modello AI...")
         if ai_name and ai_description:
             st.session_state['ai_name'] = ai_name
             st.session_state['ai_description'] = ai_description
-            # Load KPI data with scenario parameter
             scenario_param = "Churn" if scenario == "Churn" else None
             st.session_state['kpi_data'] = load_kpi_data(uploaded_file, scenario=scenario_param)
             st.session_state['scenario'] = scenario_param
@@ -251,7 +241,6 @@ def evaluate_ai_model():
             with tab:
                 st.markdown(f"### {objective}")
                 for question in questions:
-                    # Logging the question being answered
                     responses[question] = st.slider(
                         question,
                         min_value=1,
@@ -266,8 +255,6 @@ def evaluate_ai_model():
     if submit_evaluation:
         st.session_state['evaluation'] = responses
         st.success("Valutazione inviata con successo!")
-        # Logging evaluation submission
-        st.info("Valutazione del modello AI salvata con successo nel session state.")
 
 def calculate_overall_scores(responses):
     """
@@ -275,8 +262,9 @@ def calculate_overall_scores(responses):
 
     Args:
         responses (dict): Dictionary of question:score pairs.
-        Returns:
-            tuple: (ease_score, value_score) both scaled to 100.
+
+    Returns:
+        tuple: (ease_score, value_score) both scaled to 100.
     """
     ease_questions = [
         "Il modello AI è facilmente integrabile con i sistemi esistenti.",
@@ -319,60 +307,115 @@ def show_results():
     relevant_objectives = [obj for obj, score in business_scores.items() if score >= avg_score]
     
     # Filter KPI/KQI/KRI based on relevant objectives
-    relevant_kpis = kpi_df[kpi_df['Business Objective'].isin(relevant_objectives) & (kpi_df['Tipo'] == "KPI")]
-    relevant_kqis = kpi_df[kpi_df['Business Objective'].isin(relevant_objectives) & (kpi_df['Tipo'] == "KQI")]
-    relevant_kris = kpi_df[kpi_df['Business Objective'].isin(relevant_objectives) & (kpi_df['Tipo'] == "KRI")]
+    relevant_kpis = kpi_df[(kpi_df['Business Objective'].isin(relevant_objectives)) & (kpi_df['Tipo'] == "KPI")]
+    relevant_kqis = kpi_df[(kpi_df['Business Objective'].isin(relevant_objectives)) & (kpi_df['Tipo'] == "KQI")]
+    relevant_kris = kpi_df[(kpi_df['Business Objective'].isin(relevant_objectives)) & (kpi_df['Tipo'] == "KRI")]
 
-    st.info("Visualizzazione dei risultati in base agli obiettivi di business rilevanti...")
+    # Calculate overall scores first and show the overall tangibility and matrix before KPI tabs
+    ease_score, value_score = calculate_overall_scores(responses)
+    tangibility_score = (value_score + ease_score) / 2  # Average for tangibility
 
-    # Tabs for each Business Objective
-    if relevant_objectives:
-        result_tabs = st.tabs(relevant_objectives)
-    else:
+    st.subheader("Valutazione Complessiva")
+    # Show gauge and matrix first
+    st.markdown("### **Tangibility of the AI Model**")
+    display_gauge(tangibility_score, "Model Tangibility Score")
+    
+    st.markdown("### **Matrix Representation**")
+    display_matrix(ease_score, value_score)
+    st.markdown(f"**Ease of Implementation Score:** {ease_score:.2f}")
+    st.markdown(f"**Value Delivered Score:** {value_score:.2f}")
+
+    # Now show KPI tabs after overall evaluation
+    st.markdown("---")
+    st.info("Visualizzazione dei KPI/KQI/KRI in base agli obiettivi di business rilevanti...")
+
+    # If no relevant objectives found
+    if not relevant_objectives:
         st.write("Nessun obiettivo rilevante identificato dalla valutazione.")
         return
     
+    result_tabs = st.tabs(relevant_objectives)
+
     def display_indicators_with_examples(indicators, tipo):
         """
         Display given indicators (KPI/KQI/KRI) with their formula and example.
-
+        Now with more quantitative and specific units of measure in LaTeX.
+        
         Args:
             indicators (pd.DataFrame): Subset of indicators for a given Business Objective.
-            tipo (str): Tipo indicator (KPI, KQI, or KRI).
+            tipo (str): Tipo (KPI/KQI/KRI).
         """
-        if not indicators.empty:
-            for index, row in indicators.iterrows():
-                categoria = row.get('Categoria', 'N/A')
-                focus = row.get('Focus', 'N/A')
-                metriche = row.get('Metriche', 'N/A').split(', ')
+        # More detailed formulas with units
+        for index, row in indicators.iterrows():
+            categoria = row.get('Categoria', 'N/A')
+            focus = row.get('Focus', 'N/A')
+            metriche = row.get('Metriche', 'N/A').split(', ')
+            
+            st.markdown(f"**Categoria {tipo}:** {categoria}")
+            st.markdown(f"- **Focus:** {focus}")
+            
+            for metrica in metriche:
+                metric = metrica.lower().strip()
                 
-                st.markdown(f"**Categoria {tipo}:** {categoria}")
-                st.markdown(f"- **Focus:** {focus}")
+                # Define a dictionary of improved formulas with units where possible
+                if "tasso churn" in metric:
+                    formula = r"Tasso\ Churn(\%) = \frac{\text{Clienti Persi nel Periodo}}{\text{Clienti Iniziali}} \times 100"
+                    example = "Se su 1,000 clienti iniziali, 50 abbandonano nel mese, il Tasso Churn = (50/1000)*100 = 5%."
                 
-                for metrica in metriche:
-                    metric = metrica.lower().strip()
-                    formula = r"\text{Definizione non disponibile}"
-                    example = "Nessun esempio disponibile."
+                elif metric == "ordini":
+                    formula = r"\text{Ordini} = \text{Numero di Ordini (unità)}"
+                    example = "Se in un mese ricevi 150 ordini, Ordini = 150 unità."
+                elif metric == "ricavi":
+                    formula = r"\text{Ricavi (€)} = \text{Prezzo Medio per Ordine (€)} \times \text{Numero di Ordini (unità)}"
+                    example = "Se il prezzo medio è 50€ e ricevi 150 ordini, Ricavi = 50€ * 150 = 7,500€."
+                elif "traffico clienti" in metric:
+                    formula = r"\text{Traffico Clienti} = \text{Visite Totali (sessioni/mese)}"
+                    example = "Se il tuo sito riceve 10,000 visite al mese, Traffico Clienti = 10,000 sessioni/mese."
+                elif "transazioni" in metric:
+                    formula = r"\text{Transazioni} = \text{Numero di Transazioni Completate (unità)}"
+                    example = "Se vengono processate 200 transazioni in una settimana, Transazioni = 200."
+                elif "ordini sociali" in metric:
+                    formula = r"\text{Ordini Sociali} = \text{Ordini Provenienti da Canali Social (unità)}"
+                    example = "Se 50 ordini provengono da canali social in un mese, Ordini Sociali = 50."
+                elif "partner & reti" in metric:
+                    formula = r"\text{Partner & Reti} = \text{Conteggio Partner Attivi e Reti (unità)}"
+                    example = "Se hai 5 partner attivi e collabori con 3 reti, totale = 8."
+                elif "referral & profitti" in metric:
+                    formula = r"\text{Referral & Profitti (€)} = \text{Profitti da Referral (€)}"
+                    example = "Se i referral generano 2,000€ di profitti, Referral & Profitti = 2,000€."
+                elif "prodotti digitali" in metric:
+                    formula = r"\text{Prodotti Digitali} = \text{Numero di Prodotti Digitali Offerti (unità)}"
+                    example = "Se offri 10 prodotti digitali, Prodotti Digitali = 10."
+                elif "prezzi" in metric:
+                    formula = r"\text{Prezzi Medi (€)} = \frac{\text{Somma dei Prezzi di Tutti i Prodotti Venduti (€)}}{\text{Numero di Prodotti Venduti (unità)}}"
+                    example = "Se vendi 100 prodotti per un totale di 5,000€, il prezzo medio è 5,000€/100 = 50€."
+                elif "promozioni" in metric:
+                    formula = r"\text{Promozioni} = \text{Numero di Promozioni Attuate (unità)}"
+                    example = "Se lanci 3 promozioni in un mese, Promozioni = 3."
+                elif "nuovi modelli di business" in metric:
+                    formula = r"\text{Nuovi Modelli di Business} = \text{Numero di Modelli Introdotti (unità)}"
+                    example = "Se introduci 2 nuovi modelli di business, Nuovi Modelli di Business = 2."
+                elif "riduzione del tempo di consegna" in metric:
+                    formula = r"\Delta \text{Tempo Consegna (giorni)} = \text{Tempo Iniziale} - \text{Tempo Attuale}"
+                    example = "Se riduci la consegna da 5 a 3 giorni, riduzione = 2 giorni."
+                elif "% conformità" in metric:
+                    formula = r"\% Conformità = \frac{\text{Processi Conformi}}{\text{Processi Totali}} \times 100"
+                    example = "Se 90 su 100 processi sono conformi, % Conformità = 90%."
+                elif "tempo di attesa" in metric:
+                    formula = r"\text{Tempo di Attesa (minuti)} = \text{Tempo Medio di Attesa per Cliente}"
+                    example = "Se il tempo medio di attesa è 2 minuti, Tempo di Attesa = 2 min."
+                elif "lavoro completato" in metric:
+                    formula = r"\text{Lavoro Completato (unità)} = \text{Numero di Task Completati}"
+                    example = "Se completi 50 task in una settimana, Lavoro Completato = 50."
+                else:
+                    # Default if not matched
+                    formula = r"\text{Metrica non definita con unità specifiche}"
+                    example = "Nessun esempio specifico disponibile."
 
-                    # Add a churn-related example if we detect the churn metric
-                    if "tasso churn" in metric:
-                        formula = r"Tasso\ Churn = \frac{\text{Numero Clienti Persi nel Periodo}}{\text{Numero Clienti Iniziali nel Periodo}} \times 100"
-                        example = "Se su 1,000 clienti iniziali, 50 abbandonano nel mese, il Tasso Churn = (50/1000)*100 = 5%."
+                st.markdown(f"**{metrica.capitalize()}:**")
+                st.latex(formula)
+                st.markdown(f"*Esempio:* {example}\n")
 
-                    # Other standard metrics (you can extend as needed)
-                    elif metric == "ordini":
-                        formula = r"Numero\ di\ Ordini = \text{Totale Ordini Ricevuti in un Periodo}"
-                        example = "Se in un mese ricevi 150 ordini, il Numero di Ordini è 150."
-                    elif metric == "ricavi":
-                        formula = r"Ricavi = \text{Prezzo Medio per Ordine} \times \text{Numero di Ordini}"
-                        example = "Se il prezzo medio per ordine è €50 e ricevi 150 ordini, i Ricavi sono €7,500."
-
-                    st.markdown(f"**{metrica}:**")
-                    st.latex(formula)
-                    st.markdown(f"*Esempio:* {example}\n")
-        else:
-            st.write(f"Nessun {tipo} rilevante trovato per questa categoria.")
-    
     for tab, objective in zip(result_tabs, relevant_objectives):
         with tab:
             st.subheader(f"KPI/KQI/KRI per {objective}")
@@ -384,26 +427,7 @@ def show_results():
                 subset = indicators[indicators['Tipo'] == tipo]
                 display_indicators_with_examples(subset, tipo)
     
-    st.markdown("---")
-    st.subheader("Valutazione Complessiva")
-    
-    # Calculate overall scores
-    ease_score, value_score = calculate_overall_scores(responses)
-    tangibility_score = (value_score + ease_score) / 2  # Average for tangibility
-    
-    # Tabs for overall visualizations
-    overall_tabs = st.tabs(["Valutazione Complessiva", "Nuove Fonti di Creazione di Valore", 
-                            "Coinvolgimento del Cliente", "Efficienza Operativa", "Coinvolgimento della Forza Lavoro"])
-    
-    with overall_tabs[0]:
-        st.markdown("### **Tangibility of the AI Model**")
-        display_gauge(tangibility_score, "Model Tangibility Score")
-    
-        st.markdown("### **Matrix Representation**")
-        display_matrix(ease_score, value_score)
-        st.markdown(f"**Ease of Implementation Score:** {ease_score:.2f}")
-        st.markdown(f"**Value Delivered Score:** {value_score:.2f}")
-    
+    # After showing KPI tabs, show a detailed evaluation summary
     st.markdown("---")
     st.subheader("Valutazione Dettagliata")
     eval_summary = pd.DataFrame({
@@ -420,57 +444,10 @@ def show_results():
     })
     st.table(eval_summary)
     
-    st.markdown("### Valutazione Dettagliata")
+    st.markdown("### Dettagli Valutazione")
     for index, row in eval_summary.iterrows():
         st.markdown(f"- **{row['Aspetto']}:** {row['Valutazione']}")
 
-def feedback_section():
-    """
-    Collect user feedback about the app's usability and effectiveness.
-    """
-    st.header("Fornisci il Tuo Feedback")
-    with st.form(key='feedback_form'):
-        st.markdown("### Valuta l'Esperienza dell'App")
-        st.markdown("""
-        **Scala:**
-        - **1**: Fortemente in disaccordo
-        - **4**: Neutrale
-        - **7**: Fortemente d'accordo
-        """)
-        feedback_scores = {}
-        feedback_questions = [
-            "L'interfaccia dell'app è intuitiva.",
-            "Il processo di valutazione è stato chiaro e completo.",
-            "Le suggerimenti di KPI/KQI/KRI sono rilevanti.",
-            "Le visualizzazioni rappresentano efficacemente i dati.",
-            "Nel complesso, sono soddisfatto dell'app."
-        ]
-        col1, col2 = st.columns(2)
-        for i, question in enumerate(feedback_questions):
-            with col1 if i % 2 == 0 else col2:
-                feedback_scores[question] = st.slider(
-                    question,
-                    min_value=1,
-                    max_value=7,
-                    value=4,
-                    step=1,
-                    format="{}",
-                    help="1: Fortemente in disaccordo | 7: Fortemente d'accordo"
-                )
-        st.markdown("---")
-        st.subheader("Commenti Aggiuntivi")
-        comments = st.text_area("I Tuoi Commenti", height=100)
-        submit_feedback = st.form_submit_button(label='Invia Feedback')
-    
-    if submit_feedback:
-        st.success("Grazie per il tuo feedback!")
-        feedback_df = pd.DataFrame.from_dict(feedback_scores, orient='index', columns=['Valutazione'])
-        feedback_df.reset_index(inplace=True)
-        feedback_df.rename(columns={'index': 'Domanda'}, inplace=True)
-        st.table(feedback_df)
-        st.write("**I Tuoi Commenti:**")
-        st.write(comments)
-        st.info("Feedback inviato con successo. Grazie per il tuo contributo!")
 
 def main():
     """
@@ -486,9 +463,6 @@ def main():
     
     elif choice == "Risultati":
         show_results()
-    
-    elif choice == "Feedback":
-        feedback_section()
     
     # Footer
     st.markdown("""
